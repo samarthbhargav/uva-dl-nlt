@@ -1,4 +1,4 @@
-#Possible ideas
+# Possible ideas
 
 Sentence representations
 Long sequence classification with LSTM (Sequence labeling)
