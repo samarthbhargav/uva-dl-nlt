@@ -23,8 +23,6 @@ class Vocabulary:
         with codecs.open(stop_words_path, "r", "utf-8") as reader:
             for line in reader:
                 line = line.strip()
-                if self.lowercase:
-                    line = line.lower()
                 self.stop_words.add(line)
         log.info("Loaded {} stopwords".format(len(self.stop_words)))
 
@@ -41,7 +39,7 @@ class Vocabulary:
                 token = token.text
 
             # ignore stop words
-            if self.remove_stopwords and token in self.stop_words:
+            if self.remove_stopwords and token.lower() in self.stop_words:
                 continue
             # ignore whitespace-only
             if token.strip() == "":
