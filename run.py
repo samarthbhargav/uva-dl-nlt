@@ -1,4 +1,6 @@
 import logging as log
+import json
+from os import path
 
 from torch.utils.data import DataLoader
 
@@ -10,10 +12,21 @@ if __name__ == '__main__':
 
     log.basicConfig(level=log.DEBUG)
 
+    remove_stopwords = True
+    min_freq = 5
+    lowercase = True
+    
     if args.module == "train":
-        dataset = ReutersDataset(args.data_root, "training")
+        dataset = ReutersDataset(args.data_root, "training", remove_stopwords, min_freq, lowercase)
         train_loader = DataLoader(dataset, shuffle=True)
+        
+        c = 0
         for i in train_loader:
-            print(i)
+            #print(i)
+            
+            c =+ 1
+            if c%100 == 0:
+                print(c)
+                    
     else:
         raise ValueError("Unknown module")
