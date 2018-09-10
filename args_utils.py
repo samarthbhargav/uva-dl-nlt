@@ -13,6 +13,8 @@ def get_argparser():
     # subparaser for building permit-desc classifiers
     parser_train = subparsers.add_parser(
         "train", help="train the model, given parameters")
-    parser_train.add_argument("--data-root",dest="data_root", type=str, required=True, help="location of data")
+    parser_train.add_argument(
+        "--data-root", dest="data_root", type=str, required=True, help="location of data")
+    parser_train.add_argument(
+        "--model", required=True, type=str, choices={"lda", "simple-deep"}, help="type of model to train")
     return parser
-

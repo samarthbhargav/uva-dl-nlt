@@ -40,10 +40,12 @@ class ReutersDatasetIterator:
 
 class ReutersDataset(Dataset):
 
-    def __init__(self, root_location, split, vocab):
+    def __init__(self, root_location, split, vocab, cache=False):
+        # TODO: Caching is broken. Pls fix
         self.iter = ReutersDatasetIterator(root_location, split)
         self.vocab = vocab
         self.label_dict = set()
+        self.cache = cache
 
         for _, labels in self.iter:
             self.label_dict = self.label_dict.union(labels)
@@ -51,11 +53,19 @@ class ReutersDataset(Dataset):
         self.label_dict = sorted(self.label_dict)
         self.label_dict = dict([(label, index)
                                 for (index, label) in enumerate(self.label_dict)])
-
+        self.n_classes = len(self.label_dict)
         log.info("Loaded labels: {}".format(self.label_dict))
 
+        if self.cache:
+            log.info("Caching data")
+            self.data_cache = {}
+            for i in range(len(self)):
+                self.data_cache[i] = self.__load(i)
+            log.info("Caching complete. Cache size: {}".format(
+                len(self.data_cache)))
+
     def encode_labels(self, labels):
-        label_vector = np.zeros(len(self.label_dict))
+        label_vector = np.zeros(len(self.label_dict), dtype=np.float32)
         for l in labels:
             label_vector[self.label_dict[l]] = 1.
         return label_vector
@@ -63,9 +73,14 @@ class ReutersDataset(Dataset):
     def __len__(self):
         return len(self.iter.cat)
 
-    def __getitem__(self, idx):
+    def __load(self, idx):
         _id = self.iter.keys[idx]
         label = self.iter.cat[_id]
         text, categories = self.iter[_id]
         id_doc = self.vocab.doc2id(text)
         return _id, self.encode_labels(label), id_doc, text, label
+
+    def __getitem__(self, idx):
+        if self.cache:
+            return self.data_cache[idx]
+        return self.__load(idx)

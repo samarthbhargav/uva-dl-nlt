@@ -81,3 +81,6 @@ class Vocabulary:
     def doc2id(self, text):
         processed = self.process_text(text, replace_unknown=True)
         return [self.vocab[word] for word in processed]
+
+    def __len__(self):
+        return len(self.vocab)
