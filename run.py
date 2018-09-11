@@ -10,9 +10,11 @@ from data_utils import file_utils
 from args_utils import get_argparser
 from data_utils.vocabulary import Vocabulary
 from models.deep_models import SimpleDeepModel
+from models.lda import LdaModel as LDA
 from data_utils.dataloader import ReutersDataset, ReutersDatasetIterator
 from evaluate.multilabel import Multilabel
 from evaluate import eval_utils
+
 
 if __name__ == '__main__':
     args = get_argparser().parse_args()
@@ -36,16 +38,23 @@ if __name__ == '__main__':
             vocabulary.build(train_iter)
             file_utils.save_obj(vocabulary, vocab_path)
 
+        train_set = ReutersDataset(args.data_root, "training", vocabulary)
+        test_set = ReutersDataset(args.data_root, "test", vocabulary)
+
+        train_loader = DataLoader(train_set, shuffle=True, batch_size=1)
+        test_loader = DataLoader(test_set, shuffle=False, batch_size=1)
+
         if args.model == "lda":
-            # Gulfi, pls add code here
-            pass
+            lda = LDA(num_topics=100, vocabulary=vocabulary)
+            lda.fit(train_loader)
+
+            predictions = []
+            for index, x in enumerate(test_loader):
+                if index % 100 == 0:
+                    print('Predicting {}/{}'.format(index, len(test_loader)))
+                predictions.extend([result[0] for result in lda.predict(x)])
+
         elif args.model == "simple-deep":
-            train_set = ReutersDataset(args.data_root, "training", vocabulary)
-            test_set = ReutersDataset(args.data_root, "test", vocabulary)
-
-            train_loader = DataLoader(train_set, shuffle=True, batch_size=1)
-            test_loader = DataLoader(test_set, shuffle=False, batch_size=1)
-
             model = SimpleDeepModel(len(train_set.label_dict), len(vocabulary))
 
             optimizer = optim.Adam(model.parameters())
@@ -66,8 +75,10 @@ if __name__ == '__main__':
                     optimizer.step()
 
                 y_true, y_pred = eval_utils.gather_outputs(test_set, model)
+                print(y_true)
+                print(y_pred)
                 log.info("Test F1: {}".format(
                     Multilabel.f1_scores(y_true, y_pred)))
-
     else:
         raise ValueError("Unknown module")
+
