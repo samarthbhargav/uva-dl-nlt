@@ -16,6 +16,8 @@ Numbers etc. tagging or Named Entity Recognition to be fed as features
 
 LDA Latent Dirichlet Allocation given as a feature to DL
 
+Doc2Vec: https://radimrehurek.com/gensim/models/doc2vec.html
+
 # Preprocessing
 
 Checking frequencies of words and substituting them with UNK
