@@ -50,10 +50,10 @@ if __name__ == '__main__':
 
             optimizer = optim.Adam(model.parameters())
             criterion = nn.BCEWithLogitsLoss()
-            epochs = 1
-            y_true, y_pred = eval_utils.gather_outputs(test_set, model)
-            log.info("Test F1: {}".format(
-                Multilabel.f1_scores(y_true, y_pred)))
+            epochs = 10
+            # y_true, y_pred = eval_utils.gather_outputs(test_set, model)
+            # log.info("Test F1: {}".format(
+            #     Multilabel.f1_scores(y_true, y_pred)))
             for epoch in range(epochs):
                 for _id, labels, text, _, _ in train_loader:
                     labels = torch.FloatTensor(labels)
@@ -64,6 +64,10 @@ if __name__ == '__main__':
                     loss = criterion(output, labels)
                     loss.backward()
                     optimizer.step()
+
+                y_true, y_pred = eval_utils.gather_outputs(test_set, model)
+                log.info("Test F1: {}".format(
+                    Multilabel.f1_scores(y_true, y_pred)))
 
     else:
         raise ValueError("Unknown module")
