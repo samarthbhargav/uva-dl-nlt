@@ -1,6 +1,7 @@
 import os
 import logging as log
 
+import numpy as np
 import torch
 from torch import nn
 from torch import optim
@@ -11,6 +12,7 @@ from args_utils import get_argparser
 from data_utils.vocabulary import Vocabulary
 from models.deep_models import SimpleDeepModel
 from models.lda import LdaModel as LDA
+from models.random_forest import RandomForestModel as RandomForest
 from data_utils.dataloader import ReutersDataset, ReutersDatasetIterator
 from evaluate.multilabel import Multilabel
 from evaluate import eval_utils
@@ -48,11 +50,30 @@ if __name__ == '__main__':
             lda = LDA(num_topics=100, vocabulary=vocabulary)
             lda.fit(train_loader)
 
+            X = []
+            y = []
+            for index, train_datapoint in enumerate(train_loader):
+                X.append(lda.predict(train_datapoint)[0][0])
+                y.append(list(train_datapoint[1][0].numpy()))
+                if (index + 1) % 100 == 0:
+                    print("Predicting LDA {}/{}".format(index + 1, len(train_loader)))
+
+            randomForest = RandomForest()
+            randomForest.fit([X, y])
+
+            groundtruth = []
             predictions = []
-            for index, x in enumerate(test_loader):
-                if index % 100 == 0:
-                    print('Predicting {}/{}'.format(index, len(test_loader)))
-                predictions.extend([result[0] for result in lda.predict(x)])
+            for index, test_datapoint in enumerate(test_loader):
+                prediction = randomForest.predict([lda.predict(test_datapoint)[0][0]])
+                predictions.extend(prediction.tolist())
+                groundtruth.append(list(test_datapoint[1][0].numpy()))
+                if (index + 1) % 100 == 0:
+                    print("Predicting Random Forest {}/{}".format(index + 1, len(test_loader)))
+
+            groundtruth, predictions = np.array(groundtruth), np.array(predictions)
+
+            print("Test F1: {}".format(
+                Multilabel.f1_scores(groundtruth, predictions)))
 
         elif args.model == "simple-deep":
             model = SimpleDeepModel(len(train_set.label_dict), len(vocabulary))
