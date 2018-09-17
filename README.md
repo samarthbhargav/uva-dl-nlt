@@ -20,7 +20,7 @@
 
 # Preprocessing
 
-- [ ] Checking frequencies of words and substituting them with UNK
+- [x] Checking frequencies of words and substituting them with UNK
 
 - [x] Stop words
 
