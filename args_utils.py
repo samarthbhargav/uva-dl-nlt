@@ -16,5 +16,5 @@ def get_argparser():
     parser_train.add_argument(
         "--data-root", dest="data_root", type=str, required=True, help="location of data")
     parser_train.add_argument(
-        "--model", required=True, type=str, choices={"lda", "doc2vec", "simple-deep"}, help="type of model to train")
+        "--model", required=True, type=str, choices={"lda", "simple-deep", "doc2vec", "ner-model", "ner-comb-model", "hi_att"}, help="type of model to train")
     return parser
