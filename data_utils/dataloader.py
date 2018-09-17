@@ -70,6 +70,8 @@ class ReutersDataset(Dataset):
             label_vector[self.label_dict[l]] = 1.
         return label_vector
 
+    # def ret_process_text
+
     def __len__(self):
         return len(self.iter.cat)
 
@@ -77,8 +79,8 @@ class ReutersDataset(Dataset):
         _id = self.iter.keys[idx]
         label = self.iter.cat[_id]
         text, categories = self.iter[_id]
-        id_doc = self.vocab.doc2id(text)
-        return _id, self.encode_labels(label), id_doc, text, label
+        id_doc, prep_text = self.vocab.doc2id(text)
+        return _id, self.encode_labels(label), id_doc, text, prep_text, label
 
     def __getitem__(self, idx):
         if self.cache:
