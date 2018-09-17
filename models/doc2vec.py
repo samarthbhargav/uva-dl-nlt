@@ -3,9 +3,10 @@ import gensim
 import random
 import pathlib
 
-import numpy as np
 from gensim.test.utils import datapath
 
+
+# dataloader - > doc2id -> split "train/test" -> modify
 
 class doc2vecModel:
     def __init__(self, num_words, min_count, epochs):
@@ -22,14 +23,14 @@ class doc2vecModel:
         self.model = None
 
     def tagging(self, corpus, testing = False):
-        # TODO: check preprocessing. remove \n etc.
         for i, line in enumerate(corpus):
+            preprocess = [i[0] for i in line[4]]
             # if it's test set, then you just load the pre-processed dataset
             if testing:
-                yield gensim.utils.simple_preprocess(str(line[3]))
+                yield preprocess
             # else, you tag each document with a id and then load the preprocessed dataset
             else:
-                yield gensim.models.doc2vec.TaggedDocument(gensim.utils.simple_preprocess(str(line[3])), [i])
+                yield gensim.models.doc2vec.TaggedDocument(preprocess, [i])
 
     def train(self, train_corpus):
         pathlib.Path(self.modelPath).mkdir(parents=True, exist_ok=True)

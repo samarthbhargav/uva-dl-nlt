@@ -53,6 +53,7 @@ if __name__ == '__main__':
 
         if args.model == "doc2vec":
             doc2vec = Doc2Vec(num_words=100, min_count=2, epochs=40)
+
             train_corpus = list(doc2vec.tagging(corpus=train_loader))
             test_corpus = list(doc2vec.tagging(corpus=test_loader, testing = True))
 
@@ -66,6 +67,7 @@ if __name__ == '__main__':
             doc2vec.model.delete_temporary_training_data(keep_doctags_vectors=True, keep_inference=True)
 
             doc_id, sims = doc2vec.test(test_corpus=test_corpus)
+
             # Compare and print the most/median/least similar documents from the train corpus
             print('Test Document ({}): «{}»\n'.format(doc_id, ' '.join(test_corpus[doc_id])))
             print(u'SIMILAR/DISSIMILAR DOCS PER MODEL %s:\n' % doc2vec.model)
@@ -114,7 +116,7 @@ if __name__ == '__main__':
             # log.info("Test F1: {}".format(
             #     Multilabel.f1_scores(y_true, y_pred)))
             for epoch in range(epochs):
-                for _id, labels, text, _, _ in train_loader:
+                for _id, labels, text, _,  _, _ in train_loader:
                     labels = torch.FloatTensor(labels)
                     model.zero_grad()
                     model.hidden = model.init_hidden()

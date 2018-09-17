@@ -77,8 +77,12 @@ class Vocabulary:
         doc.append(self.vocab[self.EOS])
 
     def doc2id(self, text):
+        prep_text = self.process_text(text, replace_unknown=False)
+
         processed = self.process_text(text, replace_unknown=True)
-        return [self.vocab[word] for word in processed]
+        d2i = [self.vocab[word] for word in processed]
+
+        return d2i, prep_text
 
     def __len__(self):
         return len(self.vocab)
