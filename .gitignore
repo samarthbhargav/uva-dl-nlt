@@ -23,7 +23,6 @@ sdist/
 var/
 wheels/
 checkpoints/
-common_persist/
 *.egg-info/
 .installed.cfg
 *.egg
