@@ -37,6 +37,8 @@
 
 - [x] Binary cross entropy for the loss
 
-- [ ] Batches pad packed sequences etc. to make training faster
+- [ ] Batches pad packed sequence#s etc. to make training faster
 
+# To Run Code:
 
+```python run.py train --data-root ./data/reuters/ --model doc2vec```
