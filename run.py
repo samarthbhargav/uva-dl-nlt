@@ -17,6 +17,7 @@ from models.lda import LdaModel as LDA
 from models.doc2vec import doc2vecModel as Doc2Vec
 from models.deep_models import SimpleDeepModel
 from models.random_forest import RandomForestModel as RandomForest
+from models.embedding_models import GloVeEmbeddings, EmbeddingCompositionModel
 
 from evaluate import eval_utils
 from evaluate.multilabel import Multilabel
@@ -24,7 +25,10 @@ from evaluate.multilabel import Multilabel
 if __name__ == '__main__':
     args = get_argparser().parse_args()
 
-    log.basicConfig(level=log.DEBUG)
+    if args.verbose:
+        log.basicConfig(level=log.DEBUG)
+    else:
+        log.basicConfig(level=log.INFO)
 
     remove_stopwords = True
     min_freq = 5
@@ -55,7 +59,8 @@ if __name__ == '__main__':
             doc2vec = Doc2Vec(num_words=100, min_count=2, epochs=40)
 
             train_corpus = list(doc2vec.tagging(corpus=train_loader))
-            test_corpus = list(doc2vec.tagging(corpus=test_loader, testing = True))
+            test_corpus = list(doc2vec.tagging(
+                corpus=test_loader, testing=True))
 
             # sanity-check
             print(len(train_corpus))
@@ -64,17 +69,18 @@ if __name__ == '__main__':
             doc2vec.train(train_corpus=train_corpus)
 
             # to reduce memory usage after training
-            doc2vec.model.delete_temporary_training_data(keep_doctags_vectors=True, keep_inference=True)
+            doc2vec.model.delete_temporary_training_data(
+                keep_doctags_vectors=True, keep_inference=True)
 
             doc_id, sims = doc2vec.test(test_corpus=test_corpus)
 
             # Compare and print the most/median/least similar documents from the train corpus
-            print('Test Document ({}): «{}»\n'.format(doc_id, ' '.join(test_corpus[doc_id])))
+            print('Test Document ({}): «{}»\n'.format(
+                doc_id, ' '.join(test_corpus[doc_id])))
             print(u'SIMILAR/DISSIMILAR DOCS PER MODEL %s:\n' % doc2vec.model)
             for label, index in [('MOST', 0), ('MEDIAN', len(sims)//2), ('LEAST', len(sims) - 1)]:
-                print(u'%s %s: «%s»\n' % (label, sims[index], ' '.join(train_corpus[sims[index][0]].words)))
-
-
+                print(u'%s %s: «%s»\n' % (label, sims[index], ' '.join(
+                    train_corpus[sims[index][0]].words)))
 
         elif args.model == "lda":
             lda = LDA(num_topics=100, vocabulary=vocabulary)
@@ -94,19 +100,21 @@ if __name__ == '__main__':
             groundtruth = []
             predictions = []
             for index, test_datapoint in enumerate(test_loader):
-                prediction = randomForest.predict([lda.predict(test_datapoint)[0][0]])
+                prediction = randomForest.predict(
+                    [lda.predict(test_datapoint)[0][0]])
                 predictions.extend(prediction.tolist())
                 groundtruth.append(list(test_datapoint[1][0].numpy()))
                 if (index + 1) % 100 == 0:
-                    print("Predicting Random Forest {}/{}".format(index + 1, len(test_loader)))
+                    print(
+                        "Predicting Random Forest {}/{}".format(index + 1, len(test_loader)))
 
-            groundtruth, predictions = np.array(groundtruth), np.array(predictions)
+            groundtruth, predictions = np.array(
+                groundtruth), np.array(predictions)
 
             print("Test F1: {}".format(
                 Multilabel.f1_scores(groundtruth, predictions)))
 
         elif args.model == "simple-deep":
-
             model = SimpleDeepModel(len(train_set.label_dict), len(vocabulary))
 
             optimizer = optim.Adam(model.parameters())
@@ -127,9 +135,22 @@ if __name__ == '__main__':
                     optimizer.step()
 
                 y_true, y_pred = eval_utils.gather_outputs(test_set, model)
-                print(y_true)
-                print(y_pred)
                 log.info("Test F1: {}".format(
                     Multilabel.f1_scores(y_true, y_pred)))
+                
+        elif args.model == "embedding-glove":
+            glove_model_path = "./common_persist/glove.pkl"
+            if os.path.exists(glove_model_path):
+                log.info("Loading existing glove model")
+                glove = file_utils.load_obj(glove_model_path)
+            else:
+                log.info("Reading and saving glove model")
+                glove = GloVeEmbeddings("./common_persist/embeddings/glove.6B.300d.txt", vocabulary)
+                file_utils.save_obj(glove, glove_model_path)
+            embedding_model = EmbeddingCompositionModel(glove, "avg")
+            embedding_model.fit(train_loader, test_loader, 10)
+        else:
+            raise ValueError("Unknown model: {}".format(args.model))
+            
     else:
         raise ValueError("Unknown module")

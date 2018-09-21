@@ -42,7 +42,7 @@ class SimpleDeepModel(nn.Module):
 class MultiLabelMLP(nn.Module):
     def __init__(self, input_size, output_size, hidden_units, dropout=0.5):
         super().__init__()
-        assert len(hidden_units) > 1, "provide at least one hidden layer"
+        assert len(hidden_units) >= 1, "provide at least one hidden layer"
         layers = OrderedDict()
         layers["layer_0"] = nn.Linear(input_size, hidden_units[0])
         layers["relu_0"] = nn.ReLU(inplace=True)
