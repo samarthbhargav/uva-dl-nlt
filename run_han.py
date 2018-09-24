@@ -55,7 +55,6 @@ if __name__ == '__main__':
             vocabulary = Vocabulary(
                 remove_stopwords, min_freq, lowercase, "./data/reuters/stopwords")
             vocabulary.build(train_iter)
-            print(vocabulary.vocab)
             file_utils.save_obj(vocabulary, vocab_path)
 
         train_set = ReutersDataset(args.data_root, "training", vocabulary)

@@ -16,7 +16,7 @@ def get_argparser():
     parser_train.add_argument(
         "--data-root", dest="data_root", type=str, required=True, help="location of data")
     parser_train.add_argument(
-        "--model", required=True, type=str, choices={"lda", "simple-deep",
+        "--model", required=True, type=str, choices={"han", "lda", "simple-deep",
                                                      "doc2vec", "ner-model", "ner-comb-model",
                                                      "hi_att", "embedding-glove"}, help="type of model to train")
     parser_train.add_argument("--epochs", type=int, help="Number of epochs to run. Applicable only to some models (deep)")
