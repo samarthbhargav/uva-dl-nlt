@@ -14,10 +14,9 @@ from args_utils import get_argparser
 from data_utils.vocabulary import Vocabulary
 from data_utils.dataloader import ReutersDataset, ReutersDatasetIterator
 
-from models.lda import LdaModel as LDA
+from models.lda import TrainLdaModel
 from models.doc2vec import doc2vecModel as Doc2Vec
 from models.deep_models import SimpleDeepModel, Sequence2Multilabel
-from models.random_forest import RandomForestModel as RandomForest
 from models.embedding_models import GloVeEmbeddings, EmbeddingCompositionModel
 
 from evaluate import eval_utils
@@ -89,36 +88,9 @@ if __name__ == '__main__':
                     train_corpus[sims[index][0]].words)))
 
         elif args.model == "lda":
-            lda = LDA(num_topics=args.num_topics, vocabulary=vocabulary)
-            lda.fit(train_loader)
-
-            X = []
-            y = []
-            for index, train_datapoint in enumerate(train_loader):
-                X.append(lda.predict(train_datapoint)[0][0])
-                y.append(list(train_datapoint[1][0].numpy()))
-                if (index + 1) % 100 == 0:
-                    print("Predicting LDA {}/{}".format(index + 1, len(train_loader)))
-
-            randomForest = RandomForest()
-            randomForest.fit([X, y])
-
-            groundtruth = []
-            predictions = []
-            for index, test_datapoint in enumerate(test_loader):
-                prediction = randomForest.predict(
-                    [lda.predict(test_datapoint)[0][0]])
-                predictions.extend(prediction.tolist())
-                groundtruth.append(list(test_datapoint[1][0].numpy()))
-                if (index + 1) % 100 == 0:
-                    print(
-                        "Predicting Random Forest {}/{}".format(index + 1, len(test_loader)))
-
-            groundtruth, predictions = np.array(
-                groundtruth), np.array(predictions)
-
-            print("Test F1: {}".format(
-                Multilabel.f1_scores(groundtruth, predictions)))
+            ldaModel = TrainLdaModel(args.num_topics, vocabulary)
+            ldaModel.train(train_loader)
+            ldaModel.eval(test_loader)
 
         elif args.model == "simple-deep":
             assert args.epochs > 0, "Provide number of epochs"
