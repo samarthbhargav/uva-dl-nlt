@@ -124,7 +124,7 @@ if __name__ == '__main__':
             assert args.epochs > 0, "Provide number of epochs"
             cuda = torch.cuda.is_available()
             model = SimpleDeepModel(
-                len(train_set.label_dict), len(vocabulary), use_cuda=cuda)
+                len(train_set.label_dict), len(vocabulary), 2, use_cuda=cuda)
             log.info("Use CUDA: {}".format(cuda))
             if cuda:
                 model = model.cuda()
