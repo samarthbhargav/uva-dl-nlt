@@ -64,7 +64,8 @@ class EmbeddingCompositionModel(object):
             composition_method)
         self.model = MultiLabelMLP(self.embeddings.size, 90, [
             500, 500], dropout=0.3)
-
+        self.cuda = torch.cuda.is_available()
+        log.info("Using CUDA: {}".format(self.cuda))
         self.batch_size = 64
 
     def get(self, sequence):
@@ -104,6 +105,8 @@ class EmbeddingCompositionModel(object):
         self.model.eval()
         with torch.no_grad():
             for text_batch, labels_batch in self._batch(loader, self.batch_size):
+                if self.cuda:
+                    text_batch, labels_batch = text_batch.cuda(), labels_batch.cuda()
                 output = self.model(text_batch)
                 output[output > 1] = 1
                 output[output >= threshold] = 1
@@ -115,6 +118,9 @@ class EmbeddingCompositionModel(object):
         return y_true, y_pred
 
     def fit(self, train_loader, test_loader, epochs):
+        if self.cuda:
+            self.model = self.model.cuda()
+
         optimizer = optim.Adam(self.model.parameters())
         criterion = nn.BCEWithLogitsLoss()
 
@@ -126,6 +132,8 @@ class EmbeddingCompositionModel(object):
             log.info("Epoch: {}".format(epoch))
             self.model.train(True)
             for text_batch, labels_batch in self._batch(train_loader, self.batch_size):
+                if self.cuda:
+                    text_batch, labels_batch = text_batch.cuda(), labels_batch.cuda()
                 self.model.zero_grad()
                 output = self.model(text_batch)
                 loss = criterion(output, labels_batch)
