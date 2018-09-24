@@ -6,6 +6,7 @@ import gensim
 import numpy as np
 from torch import nn
 from torch import optim
+import torch.nn.functional as F
 
 from evaluate.multilabel import Multilabel
 from models.deep_models import MultiLabelMLP
@@ -107,8 +108,7 @@ class EmbeddingCompositionModel(object):
             for text_batch, labels_batch in self._batch(loader, self.batch_size):
                 if self.cuda:
                     text_batch, labels_batch = text_batch.cuda(), labels_batch.cuda()
-                output = self.model(text_batch)
-                output[output > 1] = 1
+                output = F.sigmoid(self.model(text_batch))
                 output[output >= threshold] = 1
                 output[output < threshold] = 0
                 y_pred.extend(output.cpu().numpy())

@@ -6,29 +6,27 @@ import torch.nn.functional as F
 
 
 class SimpleDeepModel(nn.Module):
-    def __init__(self, num_classes, vocab_size):
+    def __init__(self, num_classes, vocab_size, num_layers):
         super().__init__()
         self.embedding_dim = 300
         self.hidden_dim = 500
+        self.num_layers = num_layers
+        # TODO: Also bi-directional
 
         self.embedding = nn.Embedding(vocab_size, self.embedding_dim)
-        self.lstm = nn.LSTM(self.embedding_dim, self.hidden_dim, num_layers=2)
+        self.lstm = nn.LSTM(self.embedding_dim,
+                            self.hidden_dim, num_layers=self.num_layers)
         self.fc = nn.Linear(self.hidden_dim, num_classes)
         self.hidden = self.init_hidden()
 
     def init_hidden(self):
-        # Before we've done anything, we dont have any hidden state.
-        # Refer to the Pytorch documentation to see exactly
-        # why they have this dimensionality.
         # The axes semantics are (num_layers, minibatch_size, hidden_dim)
-        return (torch.zeros(2, 1, self.hidden_dim),
-                torch.zeros(2, 1, self.hidden_dim))
+        return (torch.zeros(self.num_layers, 1, self.hidden_dim),
+                torch.zeros(self.num_layers, 1, self.hidden_dim))
 
     def forward(self, sequence):
         embeds = self.embedding(sequence)
         N = len(sequence)
-        # lstm_out, self.hidden = self.lstm(
-        #     embeds.view(N, 1, -1), self.hidden)
         for i in embeds:
             # Step through the sequence one element at a time.
             # after each step, hidden contains the hidden state.
@@ -39,6 +37,7 @@ class SimpleDeepModel(nn.Module):
         output = output.view(1, -1)
         return output
 
+
 class MultiLabelMLP(nn.Module):
     def __init__(self, input_size, output_size, hidden_units, dropout=0.5):
         super().__init__()
@@ -48,10 +47,11 @@ class MultiLabelMLP(nn.Module):
         layers["relu_0"] = nn.ReLU(inplace=True)
         layers["bn_0"] = nn.BatchNorm1d(hidden_units[0])
         if dropout:
-            layers["layer_0_dropout"] = nn.Dropout(dropout, inplace=True) 
+            layers["layer_0_dropout"] = nn.Dropout(dropout, inplace=True)
         prev_hidden_size = hidden_units[0]
         for idx, hidden_size in enumerate(hidden_units[1:], 1):
-            layers["layer_{}".format(idx)] = nn.Linear(prev_hidden_size, hidden_size)
+            layers["layer_{}".format(idx)] = nn.Linear(
+                prev_hidden_size, hidden_size)
             layers["relu_{}".format(idx)] = nn.ReLU(inplace=True)
             layers["bn_{}".format(idx)] = nn.BatchNorm1d(hidden_size)
             if dropout:
@@ -61,13 +61,6 @@ class MultiLabelMLP(nn.Module):
         #layers["sigmoid_out"] = nn.Sigmoid()
 
         self.layers = nn.Sequential(layers)
-    
+
     def forward(self, x):
         return self.layers(x)
-
-    
-
-
-            
-                
-

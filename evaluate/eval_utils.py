@@ -12,8 +12,7 @@ def gather_outputs(data, model, threshold=0.5):
         for index, (_id, labels, text, _, _) in enumerate(data):
             model.hidden = model.init_hidden()
             seq = torch.LongTensor(text)
-            output = model.forward(seq)
-
+            output = F.sigmoid(model(seq))
             output[output >= threshold] = 1
             output[output < threshold] = 0
 
