@@ -24,7 +24,7 @@ class SimpleDeepModel(nn.Module):
         hidden = (torch.zeros(self.num_layers, 1, self.hidden_dim),
                 torch.zeros(self.num_layers, 1, self.hidden_dim))
         if self.cuda:
-            hidden[0], hidden[1] = hidden[0].cuda(), hidden[1].cuda()
+            return (hidden[0].cuda(), hidden[1].cuda())
         return hidden
 
     def forward(self, sequence):
