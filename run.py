@@ -121,43 +121,55 @@ if __name__ == '__main__':
                 Multilabel.f1_scores(groundtruth, predictions)))
 
         elif args.model == "simple-deep":
-            model = SimpleDeepModel(len(train_set.label_dict), len(vocabulary))
-
+            assert args.epochs > 0, "Provide number of epochs"
+            cuda = torch.cuda.is_available()
+            model = SimpleDeepModel(
+                len(train_set.label_dict), len(vocabulary), use_cuda=cuda)
+            log.info("Use CUDA: {}".format(cuda))
+            if cuda:
+                model = model.cuda()
             optimizer = optim.Adam(model.parameters())
             criterion = nn.BCEWithLogitsLoss()
-            epochs = 10
-            # y_true, y_pred = eval_utils.gather_outputs(test_set, model)
-            # log.info("Test F1: {}".format(
-            #     Multilabel.f1_scores(y_true, y_pred)))
+            epochs = args.epochs
+            y_true, y_pred = eval_utils.gather_outputs(test_set, model, cuda)
+            log.info("Test F1: {}".format(
+                Multilabel.f1_scores(y_true, y_pred)))
             for epoch in range(epochs):
+                model.train(True)
                 for _id, labels, text, _,  _, _ in train_loader:
                     labels = torch.FloatTensor(labels)
+                    seq = torch.LongTensor(text)
+                    if cuda:
+                        seq, labels = seq.cuda(), labels.cuda()
                     model.zero_grad()
                     model.hidden = model.init_hidden()
-                    seq = torch.LongTensor(text)
-                    output = model.forward(seq)
+                    output = model(seq)
                     loss = criterion(output, labels)
                     loss.backward()
                     optimizer.step()
 
-                y_true, y_pred = eval_utils.gather_outputs(test_set, model)
+                y_true, y_pred = eval_utils.gather_outputs(
+                    test_set, model, cuda)
                 log.info("Test F1: {}".format(
                     Multilabel.f1_scores(y_true, y_pred)))
-                
+
         elif args.model == "embedding-glove":
-            assert args.composition_method is not None, "Please provide composition method"
+            assert args.composition_method is not None, "Provide composition method"
+            assert args.epochs > 0, "Provide number of epochs"
             glove_model_path = "./common_persist/glove.pkl"
             if os.path.exists(glove_model_path):
                 log.info("Loading existing glove model")
                 glove = file_utils.load_obj(glove_model_path)
             else:
                 log.info("Reading and saving glove model")
-                glove = GloVeEmbeddings("./common_persist/embeddings/glove.6B.300d.txt", vocabulary)
+                glove = GloVeEmbeddings(
+                    "./common_persist/embeddings/glove.6B.300d.txt", vocabulary)
                 file_utils.save_obj(glove, glove_model_path)
-            embedding_model = EmbeddingCompositionModel(glove, args.composition_method)
-            embedding_model.fit(train_loader, test_loader, 30)
+            embedding_model = EmbeddingCompositionModel(
+                glove, args.composition_method)
+            embedding_model.fit(train_loader, test_loader, args.epochs)
         else:
             raise ValueError("Unknown model: {}".format(args.model))
-            
+
     else:
         raise ValueError("Unknown module")
