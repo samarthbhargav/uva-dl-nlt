@@ -79,12 +79,7 @@ class ReutersDataset(Dataset):
         _id = self.iter.keys[idx]
         label = self.iter.cat[_id]
         text, categories = self.iter[_id]
-        print(":::::::::::", text)
         id_doc, prep_text = self.vocab.doc2id(text)
-        print("%%%%%%%%%5", id_doc)
-        print("$$$$$$$$$", prep_text)
-        print("PPP", len(prep_text), len(id_doc))
-        1/0
         return _id, self.encode_labels(label), id_doc, text, prep_text, label
 
     def __getitem__(self, idx):

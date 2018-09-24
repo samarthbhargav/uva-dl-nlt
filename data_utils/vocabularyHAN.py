@@ -40,7 +40,7 @@ class Vocabulary:
         sentence = []
         # lower case if necessary
         num_sentences = 0
-        for token in doc:
+        for ind, token in enumerate(doc):
             # lower case text if necessary
             if self.lowercase:
                 token = token.text.lower()
@@ -55,20 +55,20 @@ class Vocabulary:
                 continue
 
             # replace unkown words with the UNK token
-            if replace_unknown and token not in self.vocab:
+            if replace_unknown and token not in self.vocab and token not in ["!", ".", "?"]:
                 token = self.UNK
-            if token not in [".", "!", "?"] and (not replace_unknown or token in self.vocab):
+            if token not in [".", "!", "?"]: #and (not replace_unknown or token in self.vocab):
                 sentence.append(token)
             else:
                 sentence = self.crop_pad(sentence)
-                if len(sentence)!=20:
-                    print("!!!!!!!!!!!!!!!!!!", sentence)
-                    1/0
                 processed.append(sentence)
                 sentence = []
                 num_sentences += 1
                 if num_sentences == self.max_num_sent:
                     return processed
+
+        sentence = self.crop_pad(sentence)
+        processed.append(sentence)
         return processed + [["0"] * self.max_sent_len] * (self.max_num_sent - len(processed))
 
     def process_list_sent(self, text, replace_unknown=True):
@@ -110,10 +110,8 @@ class Vocabulary:
 
     def doc2id(self, text):
         prep_text = self.process_text(text, replace_unknown=True)
-        print("!!!!!!!", prep_text)
         #processed = self.process_list_sent(prep_text, replace_unknown=True)
         d2i = [[self.vocab[word] for word in sent] for sent in prep_text]
-        print("@@@@@@@@@@", d2i)
         return d2i, prep_text
 
     def __len__(self):
