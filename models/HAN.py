@@ -9,7 +9,7 @@ import torch.nn.functional as F
 import codecs
 import logging as log
 import torch.optim as optim
-
+from evaluate.multilabel import Multilabel
 
 class WordAttention(nn.Module):
     def __init__(self, batch_size, embedding_size):
@@ -45,7 +45,6 @@ class WordAttention(nn.Module):
         # Word to Sentence:
 
         out, h = self.word_gru(x, word_state)
-        print("***********", x.size(), out.size())
         u = F.tanh(self.word_att_lin(out))
         logits = self.word_att_context_lin(u)
         a = F.softmax(logits, dim=2)
@@ -84,7 +83,6 @@ class SentAttention(nn.Module):
         logits = self.sent_att_context_lin(u)
         a = F.softmax(logits)
         attended = a * out
-        print(">>>>>>>", word_att.size(), out.size(), u.size(), logits.size(), a.size(), attended.size())
         #1/0
         sent_att = attended.sum(1, False)
         doc_logits = self.classifier(sent_att)
@@ -115,7 +113,7 @@ class hanTrainer(object):
             for _id in sent:
                 emb = self.embeddings[_id]
                 if emb is None:
-                    continue
+                    emb = [-1] * self.embedding_size
                 sentence.append(emb)
             embeddings.append(sentence)
         if len(embeddings) == 0:
@@ -139,8 +137,8 @@ class hanTrainer(object):
                 yield torch.FloatTensor(batch), torch.FloatTensor(labels_batch)
                 batch = []
                 labels_batch = []
-            text = [[t.item() for t in sent] for sent in text]
 
+            text = [[t.item() for t in sent] for sent in text]
             embeddings = self.get(text)
             batch.append(embeddings)
             labels_batch.append(labels.numpy()[0])
@@ -152,12 +150,16 @@ class hanTrainer(object):
         y_true = []
         y_pred = []
         log.info("Gathering outputs")
-        self.model.eval()
+        self.sent_attention.eval()
+        self.word_attention.eval()
         with torch.no_grad():
             for text_batch, labels_batch in self._batch(loader, self.batch_size):
-                if self.cuda:
-                    text_batch, labels_batch = text_batch.cuda(), labels_batch.cuda()
-                output = F.sigmoid(self.model(text_batch))
+                #if self.cuda:
+                #    text_batch, labels_batch = text_batch.cuda(), labels_batch.cuda()
+                if text_batch.size()[0] != 64:
+                    break
+                predictions = self.forward(text_batch)
+                output = F.sigmoid(predictions)
                 output[output >= threshold] = 1
                 output[output < threshold] = 0
                 y_pred.extend(output.cpu().numpy())
@@ -166,13 +168,29 @@ class hanTrainer(object):
         y_true, y_pred = np.array(y_true), np.array(y_pred)
         return y_true, y_pred
 
+    def forward(self, text_batch):
+        total_out = None
+        word_state = self.word_attention.init_hidden()
+        sent_state = self.sent_attention.init_hidden()
+        for i in range(self.max_sent_len):
+            current_out, word_state = self.word_attention(text_batch[:, :, i, :], word_state)
+            current_out = current_out.unsqueeze_(2)
+            if total_out is None:
+                total_out = current_out
+            else:
+                total_out = torch.cat((total_out, current_out), 2)
+        total_out = total_out.sum(dim=3)
+        for i in range(self.max_num_sent):
+            predictions, sent_state = self.sent_attention(total_out[:, i:i + 1, :], sent_state)
+        return predictions
+
     def fit(self, train_loader, test_loader, epochs):
         if self.cuda:
             self.word_attention = self.word_attention#.cuda()
             self.sent_attention = self.sent_attention#.cuda()
 
-        word_optimizer = optim.Adam(self.word_attention.parameters())
-        sent_optimizer = optim.Adam(self.sent_attention.parameters())
+        word_optimizer = optim.Adam(self.word_attention.parameters(), lr=0.005)
+        sent_optimizer = optim.Adam(self.sent_attention.parameters(), lr=0.005)
         criterion = nn.BCEWithLogitsLoss()
 
         '''y_true, y_pred = self.gather_outputs(test_loader)
@@ -185,33 +203,13 @@ class hanTrainer(object):
             self.word_attention.train(True)
             self.sent_attention.train(True)
             for text_batch, labels_batch in self._batch(train_loader, self.batch_size):
-                print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-                print(">>>>>>>>>>>>>", text_batch.shape, labels_batch.shape)
                 #if self.cuda:
                 #    text_batch, labels_batch = text_batch.cuda(), labels_batch.cuda()
+                if text_batch.size()[0]!=self.batch_size:
+                    continue
                 self.sent_attention.zero_grad()
                 self.word_attention.zero_grad()
-                print(">>>>>>>>>>>>", type(text_batch), text_batch.shape)
-
-                max_sent_length = text_batch.size()[0]
-
-                total_out = None
-                word_state = self.word_attention.init_hidden()
-                sent_state = self.sent_attention.init_hidden()
-                for i in range(self.max_sent_len):
-                    current_out, word_state = self.word_attention(text_batch[:, :, i, :], word_state)
-                    current_out = current_out.unsqueeze_(2)
-                    #print(":::::::;", current_out.size())
-                    if total_out is None:
-                        total_out = current_out
-                    else:
-                        total_out = torch.cat((total_out, current_out), 2)
-                    print(":+++", current_out.size(), total_out.size())
-                total_out = total_out.sum(dim=3)
-                print("totallllllllllllll", total_out.size())
-                for i in range(self.max_num_sent):
-                    predictions, sent_state = self.sent_attention(total_out[:, i:i+1, :], sent_state)
-                #predictions, sent_state = self.sent_attention(total_out, sent_state)
+                predictions = self.forward(text_batch)
                 loss = criterion(predictions, labels_batch)
                 loss.backward()
                 word_optimizer.step()
