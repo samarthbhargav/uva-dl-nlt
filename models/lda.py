@@ -22,7 +22,7 @@ class LdaModel:
         self.num_topics = num_topics
         self.lda = None
         self.vocabulary = vocabulary
-        self.modelName = "lda-model"
+        self.modelName = "lda-model-{}".format(num_topics)
         self.modelPath = os.path.join(os.getcwd(), "checkpoints", "lda")
 
         # directory to save model
@@ -44,13 +44,20 @@ class LdaModel:
         self.lda = lda
 
     def predict(self, texts):
-        return [list(zip(*sorted(self.lda[text], key=lambda _: -_[1]))) for text in self.doc2bow(texts)]
+        return [list(zip(*sorted(self.lda[text], key=lambda _: -_[1]))) for text in self.doc2bow([texts])]
 
     def doc2bow(self, data):
-        wordList = [int(np.array(tensor)) for tensor in data[2]]
-        processedData = [(int(word), wordList.count(int(word))) for word in wordList]
+        wordsPerDocument = [[int(tensor) for tensor in datapoint[2]] for datapoint in data]
 
-        return [processedData]
+        bagOfWordsPerDocument = []
+        for wordsOfDocument in wordsPerDocument:
+            uniqueWordsOfDocument = list(set(wordsOfDocument))
+            bagOfWordsOfDocument = []
+            for word in uniqueWordsOfDocument:
+                bagOfWordsOfDocument.append((word, wordsOfDocument.count(word)))
+            bagOfWordsPerDocument.append(bagOfWordsOfDocument)
+
+        return bagOfWordsPerDocument
 
 
 class TrainLdaModel:
