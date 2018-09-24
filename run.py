@@ -3,6 +3,7 @@ import numpy as np
 import logging as log
 
 import torch
+import numpy as np
 from torch import nn
 from torch import optim
 from torch.utils.data import DataLoader
@@ -33,6 +34,11 @@ if __name__ == '__main__':
     remove_stopwords = True
     min_freq = 5
     lowercase = True
+
+    # seed everything for reproducability
+    # what is the Ultimate Answer to Life, The Universe and Everything?
+    np.random.seed(42)
+    torch.manual_seed(42)
 
     if args.module == "train":
         train_iter = ReutersDatasetIterator(args.data_root, "training")
