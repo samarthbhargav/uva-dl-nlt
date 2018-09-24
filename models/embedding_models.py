@@ -46,11 +46,24 @@ class GloVeEmbeddings(object):
 
 
 class EmbeddingCompositionModel(object):
+
+    @staticmethod
+    def get_composition_method(method):
+        return {
+            "avg": lambda _: np.mean(_, axis=0),
+            "sum": lambda _: np.sum(_, axis=0),
+            "max": lambda _: np.max(_, axis=0),
+            "min": lambda _: np.min(_, axis=0)
+        }[method]
+
     def __init__(self, embeddings, composition_method):
-        assert composition_method in {"avg", "sum", "max", "min", "all"}
+        assert composition_method in {"avg", "sum", "max", "min"}
         self.embeddings = embeddings
-        self.composition_method = composition_method
-        self.model = MultiLabelMLP(300, 90, [500, 500])
+        self.composition_method = self.get_composition_method(
+            composition_method)
+        self.model = MultiLabelMLP(self.embeddings.size, 90, [
+            500, 500], dropout=0.3)
+
         self.batch_size = 64
 
     def get(self, sequence):
@@ -64,7 +77,7 @@ class EmbeddingCompositionModel(object):
             log.debug("No words found in sequence. Returning -1s")
             return np.ones(self.embeddings.size, dtype=float) * -1
         # TODO: Add other compositions
-        return np.mean(embeddings, axis=0)
+        return self.composition_method(embeddings)
 
     def _batch(self, loader, batch_size):
         batch = []

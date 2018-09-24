@@ -148,7 +148,7 @@ if __name__ == '__main__':
                 glove = GloVeEmbeddings("./common_persist/embeddings/glove.6B.300d.txt", vocabulary)
                 file_utils.save_obj(glove, glove_model_path)
             embedding_model = EmbeddingCompositionModel(glove, "avg")
-            embedding_model.fit(train_loader, test_loader, 10)
+            embedding_model.fit(train_loader, test_loader, 30)
         else:
             raise ValueError("Unknown model: {}".format(args.model))
             
