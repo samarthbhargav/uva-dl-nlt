@@ -89,7 +89,7 @@ if __name__ == '__main__':
                     train_corpus[sims[index][0]].words)))
 
         elif args.model == "lda":
-            lda = LDA(num_topics=100, vocabulary=vocabulary)
+            lda = LDA(num_topics=args.num_topics, vocabulary=vocabulary)
             lda.fit(train_loader)
 
             X = []
