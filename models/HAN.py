@@ -105,6 +105,7 @@ class hanTrainer(object):
         self.sent_attention = SentAttention(batch_size=self.batch_size, embedding_size=self.embedding_size, cls_num=90)
         self.cuda = torch.cuda.is_available()
         log.info("Using CUDA: {}".format(self.cuda))
+        self.device = "cpu"#torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     def get(self, sequence):
         embeddings = []
@@ -155,17 +156,21 @@ class hanTrainer(object):
         with torch.no_grad():
             for text_batch, labels_batch in self._batch(loader, self.batch_size):
                 #if self.cuda:
-                #    text_batch, labels_batch = text_batch.cuda(), labels_batch.cuda()
+                text_batch, labels_batch = text_batch.to(self.device), labels_batch.to(self.device)
                 if text_batch.size()[0] != 64:
                     break
                 predictions = self.forward(text_batch)
+                tloss = self.criterion(predictions, labels_batch)
+                print(tloss.item())
                 output = F.sigmoid(predictions)
-                output[output >= threshold] = 1
-                output[output < threshold] = 0
+                #output[output >= threshold] = 1
+                #output[output < threshold] = 0
                 y_pred.extend(output.cpu().numpy())
                 y_true.extend(labels_batch.cpu().numpy())
 
         y_true, y_pred = np.array(y_true), np.array(y_pred)
+        print("MMMMMMMMMMMMMMMMMMMMMMMM-pred:", y_pred.shape)
+        print("SSSSSSSSSSSSSSSSSSSSSSSS-true:", y_true.shape)
         return y_true, y_pred
 
     def forward(self, text_batch):
@@ -186,12 +191,12 @@ class hanTrainer(object):
 
     def fit(self, train_loader, test_loader, epochs):
         if self.cuda:
-            self.word_attention = self.word_attention#.cuda()
-            self.sent_attention = self.sent_attention#.cuda()
+            self.word_attention = self.word_attention.to(self.device)
+            self.sent_attention = self.sent_attention.to(self.device)
 
         word_optimizer = optim.Adam(self.word_attention.parameters(), lr=0.005)
         sent_optimizer = optim.Adam(self.sent_attention.parameters(), lr=0.005)
-        criterion = nn.BCEWithLogitsLoss()
+        self.criterion = nn.BCEWithLogitsLoss()
 
         '''y_true, y_pred = self.gather_outputs(test_loader)
         log.info("Test F1: {}".format(
@@ -202,15 +207,24 @@ class hanTrainer(object):
             log.info("Epoch: {}".format(epoch))
             self.word_attention.train(True)
             self.sent_attention.train(True)
+
+            count = 0
             for text_batch, labels_batch in self._batch(train_loader, self.batch_size):
+                count += 1
+                #'''
+                if count == 10:
+                    count = 0
+                    break
+                #'''
                 #if self.cuda:
-                #    text_batch, labels_batch = text_batch.cuda(), labels_batch.cuda()
+                text_batch, labels_batch = text_batch.to(self.device), labels_batch.to(self.device)
+
                 if text_batch.size()[0]!=self.batch_size:
                     continue
                 self.sent_attention.zero_grad()
                 self.word_attention.zero_grad()
                 predictions = self.forward(text_batch)
-                loss = criterion(predictions, labels_batch)
+                loss = self.criterion(predictions, labels_batch)
                 loss.backward()
                 word_optimizer.step()
                 sent_optimizer.step()
@@ -218,95 +232,9 @@ class hanTrainer(object):
 
             y_true, y_pred = self.gather_outputs(test_loader)
             log.info("Test F1: {}".format(
-                Multilabel.f1_scores(y_true, y_pred)))
+                Multilabel.f1_scores(np.argmax(y_true, axis=1), np.argmax(y_pred, axis=1))))
+            '''
             y_true, y_pred = self.gather_outputs(train_loader)
             log.info("Train F1: {}".format(
                 Multilabel.f1_scores(y_true, y_pred)))
-
-
-
-
-'''
-class HAN(nn.Module):
-    """
-    The model receives as input a document,
-    consisting of a sequence of sentences,
-    where each sentence consists of a sequence of word IDs.
-
-    Each word of each sentence is separately embedded,
-    to produce two sequences of word vectors,
-    one for each sentence.
-
-    The sequences are then separately encoded into two sentence matrices.
-    An attention mechanism then separately reduces the sentence matrices
-    to sentence vectors, which are then encoded to produce a document matrix.
-
-    A final attention step reduces the document matrix to a document vector,
-    which is then passed through the final prediction network
-    to assign the class label.
-    """
-
-    def __init__(self, pretrained_weights, cls_num = 90, batch_size=1):
-
-        super(HAN, self).__init__()
-
-        self.word_len = 50
-        self.embedding_size = 20
-        self.GRU_hid_size = 10
-        self.GRU_dropout = 0.0
-        self.word_att_size = self.GRU_hid_size * 2
-        self.cls_num = cls_num
-        self.batch_size = batch_size
-
-
-        #self.word_embedding_layer = nn.Linear(self.word_len, self.embedding_size, bias=True)
-        #self.word_embedding_layer.weight.data =
-        # self.embedding = nn.Embedding(self.word_len, self.embedding_size)#, padding_idx=0)
-
-        # Word Encoder
-        #self.embedding = nn.Embedding.from_pretrained(pretrained_weights)
-        self.word_gru = nn.GRU(input_size=self.embedding_size, hidden_size=self.GRU_hid_size, num_layers=1,
-                          bias=True, batch_first=True, dropout=self.GRU_dropout, bidirectional=False)#, bidirectional=True)
-        #Word Attention
-        self.word_att_lin = nn.Linear(self.GRU_hid_size * 2, self.word_att_size)
-        self.word_att_context_lin = nn.Linear(self.word_att_size, 1, bias=False)
-
-        #sentence Encoder
-        self.sent_gru = nn.GRU(input_size=self.word_att_size, hidden_size=self.GRU_hid_size, num_layers=1,
-                          bias=True, batch_first=True, dropout=self.GRU_dropout, bidirectional=False)#, bidirectional=True)
-        #sentence Attention
-        self.sent_att_lin = nn.Linear(self.GRU_hid_size * 2, self.word_att_size)
-        self.sent_att_context_lin = nn.Linear(self.word_att_size, 1, bias=False)
-
-        self.classifier = nn.Linear(self.word_att_size, self.cls_num, bias=True)
-
-    def init_hidden(self):
-        return Variable(torch.zeros(2, self.batch_size, self.GRU_hid_size))
-
-    def forward(self, input):
-
-        #x = self.word_embedding_layer(input)
-        x= input#self.embedding(input)
-
-        # Word to Sentence:
-        out, h = self.gru(x)
-        u = F.Tanh(self.word_att_lin(out))
-        logits = self.word_att_context_lin(u)
-        a = F.softmax(logits)
-        attended = a * h
-        word_att = attended.sum(0,True).squeeze(0)
-
-        # Sentence to Doc
-        out, h = self.gru(word_att)
-        u = F.Tanh(self.sent_att_lin(out))
-        logits = self.sent_att_context_lin(u)
-        a = F.softmax(logits)
-        attended = a * h
-        sent_att = attended.sum(0,True).squeeze(0)
-
-        doc_logits = self.classifier(sent_att)
-
-        # wont apply soft max here. It is included already loss function
-        return doc_logits
-'''
-
+            '''
