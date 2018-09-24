@@ -16,7 +16,7 @@ from data_utils.dataloader import ReutersDataset, ReutersDatasetIterator
 
 from models.lda import LdaModel as LDA
 from models.doc2vec import doc2vecModel as Doc2Vec
-from models.deep_models import SimpleDeepModel
+from models.deep_models import SimpleDeepModel, Sequence2Multilabel
 from models.random_forest import RandomForestModel as RandomForest
 from models.embedding_models import GloVeEmbeddings, EmbeddingCompositionModel
 
@@ -122,40 +122,9 @@ if __name__ == '__main__':
 
         elif args.model == "simple-deep":
             assert args.epochs > 0, "Provide number of epochs"
-            cuda = torch.cuda.is_available()
-            model = SimpleDeepModel(
-                len(train_set.label_dict), len(vocabulary), 2, use_cuda=cuda)
-            log.info("Use CUDA: {}".format(cuda))
-            if cuda:
-                model = model.cuda()
-            optimizer = optim.Adam(model.parameters())
-            criterion = nn.BCEWithLogitsLoss()
-            epochs = args.epochs
-            y_true, y_pred = eval_utils.gather_outputs(test_set, model, cuda)
-            log.info("Test F1: {}".format(
-                Multilabel.f1_scores(y_true, y_pred)))
-            for epoch in range(epochs):
-                model.train(True)
-                for idx, (_id, labels, text, _,  _, _) in enumerate(train_loader, 1):
-                    labels = torch.FloatTensor(labels)
-                    seq = torch.LongTensor(text)
-                    if cuda:
-                        seq, labels = seq.cuda(), labels.cuda()
-                    model.zero_grad()
-                    model.hidden = model.init_hidden()
-                    output = model(seq)
-                    loss = criterion(output, labels)
-                    loss.backward()
-                    optimizer.step()
-
-                    if idx % 1000 == 0:
-                        log.info("Train Loop: {} done".format(idx))
-
-                y_true, y_pred = eval_utils.gather_outputs(
-                    test_set, model, cuda)
-                log.info("Test F1: {}".format(
-                    Multilabel.f1_scores(y_true, y_pred)))
-
+            seq2ml = Sequence2Multilabel(len(train_set.label_dict), len(
+                vocabulary.vocab), torch.cuda.is_available())
+            seq2ml.train(train_loader, test_loader, args.epochs)
         elif args.model == "embedding-glove":
             assert args.composition_method is not None, "Provide composition method"
             assert args.epochs > 0, "Provide number of epochs"

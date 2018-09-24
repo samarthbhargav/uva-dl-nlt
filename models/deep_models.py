@@ -1,8 +1,13 @@
+import logging as log
 from collections import OrderedDict
 
 import torch
+import numpy as np
 from torch import nn
+from torch import optim
 import torch.nn.functional as F
+
+from evaluate.multilabel import Multilabel
 
 
 class SimpleDeepModel(nn.Module):
@@ -22,7 +27,7 @@ class SimpleDeepModel(nn.Module):
     def init_hidden(self):
         # The axes semantics are (num_layers, minibatch_size, hidden_dim)
         hidden = (torch.zeros(self.num_layers, 1, self.hidden_dim),
-                torch.zeros(self.num_layers, 1, self.hidden_dim))
+                  torch.zeros(self.num_layers, 1, self.hidden_dim))
         if self.use_cuda:
             return (hidden[0].cuda(), hidden[1].cuda())
         return hidden
@@ -67,3 +72,65 @@ class MultiLabelMLP(nn.Module):
 
     def forward(self, x):
         return self.layers(x)
+
+
+class Sequence2Multilabel(object):
+    def __init__(self, n_classes, vocab_size, use_cuda):
+        self.use_cuda = use_cuda
+        self.num_layers = 2
+        self.model = SimpleDeepModel(
+            n_classes, vocab_size, self.num_layers, use_cuda=self.use_cuda)
+        if self.use_cuda:
+            self.model = self.model.cuda()
+
+    def _gather_outputs(self, loader):
+        threshold = 0.5
+        y_true = []
+        y_pred = []
+        log.info("Gathering outputs")
+        with torch.no_grad():
+            for index, (_id, labels, text, _,  _, _) in enumerate(loader):
+                self.model.hidden = self.model.init_hidden()
+                seq = torch.LongTensor(text)
+                if self.use_cuda:
+                    seq = seq.cuda()
+                output = torch.sigmoid(self.model(seq))
+                output[output >= threshold] = 1
+                output[output < threshold] = 0
+                y_pred.append(output.cpu().view(-1).numpy())
+                y_true.append(labels.cpu().view(-1).numpy())
+
+                if (index + 1) % 1000 == 0:
+                    log.info("Eval loop: {} done".format(index + 1))
+
+        y_true, y_pred = np.array(y_true), np.array(y_pred)
+        return y_true, y_pred
+
+    def train(self, train_loader, test_loader, epochs):
+        optimizer = optim.Adam(self.model.parameters())
+        criterion = nn.BCEWithLogitsLoss()
+        y_true, y_pred = self._gather_outputs(test_loader)
+        log.info("Test F1: {}".format(
+            Multilabel.f1_scores(y_true, y_pred)))
+
+        for epoch in range(epochs):
+            self.model.train(True)
+            for idx, (_id, labels, text, _,  _, _) in enumerate(train_loader, 1):
+                labels = torch.FloatTensor(labels)
+                seq = torch.LongTensor(text)
+                if self.use_cuda:
+                    seq, labels = seq.cuda(), labels.cuda()
+                self.model.zero_grad()
+                self.model.hidden = self.model.init_hidden()
+                output = self.model(seq)
+                loss = criterion(output, labels)
+                loss.backward()
+                optimizer.step()
+
+                if idx % 1000 == 0:
+                    log.info("Train Loop: {} done".format(idx))
+
+            y_true, y_pred = self._gather_outputs(
+                test_loader)
+            log.info("Test F1: {}".format(
+                Multilabel.f1_scores(y_true, y_pred)))
