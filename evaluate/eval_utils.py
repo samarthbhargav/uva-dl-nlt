@@ -10,7 +10,7 @@ def gather_outputs(data, model, cuda):
     y_pred = []
     log.info("Gathering outputs")
     with torch.no_grad():
-        for index, (_id, labels, text, _, _) in enumerate(data):
+        for index, (_id, labels, text, _,  _, _) in enumerate(data):
             
             model.hidden = model.init_hidden()
             seq = torch.LongTensor(text)

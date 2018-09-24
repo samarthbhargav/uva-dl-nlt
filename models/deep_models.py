@@ -8,7 +8,7 @@ import torch.nn.functional as F
 class SimpleDeepModel(nn.Module):
     def __init__(self, num_classes, vocab_size, num_layers, use_cuda=False):
         super().__init__()
-        self.cuda = use_cuda
+        self.use_cuda = use_cuda
         self.embedding_dim = 300
         self.hidden_dim = 500
         self.num_layers = num_layers
@@ -23,7 +23,7 @@ class SimpleDeepModel(nn.Module):
         # The axes semantics are (num_layers, minibatch_size, hidden_dim)
         hidden = (torch.zeros(self.num_layers, 1, self.hidden_dim),
                 torch.zeros(self.num_layers, 1, self.hidden_dim))
-        if self.cuda:
+        if self.use_cuda:
             return (hidden[0].cuda(), hidden[1].cuda())
         return hidden
 
