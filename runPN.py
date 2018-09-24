@@ -6,6 +6,7 @@ import torch
 from torch import nn
 from torch import optim
 from torch.utils.data import DataLoader
+import spacy
 
 from data_utils import file_utils
 from args_utils import get_argparser
@@ -29,15 +30,21 @@ if __name__ == '__main__':
     if args.module == "train":
         train_iter = ReutersDatasetIterator(args.data_root, "training")
         vocab_path = "common_persist/vocabPN.pkl"
+        nlp_instance = spacy.load("en")
         if os.path.exists(vocab_path):
             log.info("Loading existing vocab")
             vocabulary = file_utils.load_obj(vocab_path)
+            vocabulary.nlp = nlp_instance
         else:
             log.info("Vocab doesn't exist. Creating")
             vocabulary = Vocabulary(
                 remove_stopwords, min_freq, lowercase, "./data/reuters/stopwords")
+            vocabulary.nlp = nlp_instance
             vocabulary.build(train_iter)
+            # pickling the nlp instance is causing errors
+            vocabulary.nlp = None
             file_utils.save_obj(vocabulary, vocab_path)
+            vocabulary.nl= nlp_instance
 
         train_set = ReutersDataset(args.data_root, "training", vocabulary)
         test_set = ReutersDataset(args.data_root, "test", vocabulary)

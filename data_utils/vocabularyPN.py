@@ -16,7 +16,7 @@ class Vocabulary:
         self.lowercase = lowercase
         self._read_stop_words(stop_words_path)
         self.vocab = dict()
-        self.nlp = spacy.load("en")
+        self.nlp = None
         # from https://spacy.io/api/annotation#named-entities
         self.entity_types_id = {'PERSON':0, 'NORP':1, 'FAC':2, 'ORG':3, 'GPE':4, 'LOC':5, 'PRODUCT':6, 'EVENT':7, 'WORK_OF_ART':8, 'LAW':9,
                              'LANGUAGE':10, 'DATE':11, 'TIME':12, 'PERCENT':13, 'MONEY':14, 'QUANTITY':15, 'ORDINAL':16, 'CARDINAL':17}
@@ -90,7 +90,6 @@ class Vocabulary:
     def doc2id(self, text):
         processed, ner_text_label = self.process_text(text, replace_unknown=True)
         ret_processed = [self.vocab[word] for word in processed]
-
         ret_ners_text = [self.vocab[tup[0]] for tup in ner_text_label]
         ret_ners_label = [self.entity_types_id[tup[1]] for tup in ner_text_label]
 
