@@ -111,8 +111,8 @@ class EmbeddingCompositionModel(object):
                 output[output > 1] = 1
                 output[output >= threshold] = 1
                 output[output < threshold] = 0
-                y_pred.extend(output.numpy())
-                y_true.extend(labels_batch.numpy())
+                y_pred.extend(output.cpu().numpy())
+                y_true.extend(labels_batch.cpu().numpy())
 
         y_true, y_pred = np.array(y_true), np.array(y_pred)
         return y_true, y_pred
