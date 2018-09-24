@@ -114,6 +114,7 @@ class Sequence2Multilabel(object):
             Multilabel.f1_scores(y_true, y_pred)))
 
         for epoch in range(epochs):
+            log.info("Epoch: {}".format(epoch))
             self.model.train(True)
             for idx, (_id, labels, text, _,  _, _) in enumerate(train_loader, 1):
                 labels = torch.FloatTensor(labels)
