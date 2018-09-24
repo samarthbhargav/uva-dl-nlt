@@ -23,5 +23,11 @@ def get_argparser():
     parser_train.add_argument("--composition-method", dest="composition_method", required=False,
                               type=str, choices={"avg", "min", "max", "sum"},
                               help="Applicable only for model 'embedding-glove': How to compose embeddings")
-    
+    parser_train.add_argument("--num-topics",
+                              dest="num_topics",
+                              type=int,
+                              required=False,
+                              default=100,
+                              help="number of topics for lda model")
+
     return parser

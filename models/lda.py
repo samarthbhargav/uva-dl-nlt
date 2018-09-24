@@ -15,14 +15,14 @@ class LdaModel:
         self.num_topics = num_topics
         self.lda = None
         self.vocabulary = vocabulary
-
-        # self.modelPath = os.path.join(os.getcwd(), "checkpoints", "lda")
-        temp = os.path.join(os.getcwd(), "checkpoints", "lda")
-        if not os.path.exists(temp):
-            os.makedirs("checkpoints/lda")
-        self.modelPath = temp
-
         self.modelName = "lda-model"
+        self.modelPath = os.path.join(os.getcwd(), "checkpoints", "lda")
+
+        # directory to save model
+        if not os.path.exists(self.modelPath):
+            os.makedirs(self.modelPath)
+
+        print("Initialized LDA for {} Topics".format(num_topics))
 
     def fit(self, data):
         pathlib.Path(self.modelPath).mkdir(parents=True, exist_ok=True)
@@ -31,7 +31,7 @@ class LdaModel:
         try:
             lda = models.LdaModel.load(modelFile)
         except FileNotFoundError:
-            lda = models.LdaModel(self.doc2bow(data), num_topics=100, minimum_probability=0)
+            lda = models.LdaModel(self.doc2bow(data), num_topics=self.num_topics, minimum_probability=0)
             lda.save(modelFile)
 
         self.lda = lda
