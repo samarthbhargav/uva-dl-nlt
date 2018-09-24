@@ -136,7 +136,7 @@ if __name__ == '__main__':
                 Multilabel.f1_scores(y_true, y_pred)))
             for epoch in range(epochs):
                 model.train(True)
-                for _id, labels, text, _,  _, _ in train_loader:
+                for idx, (_id, labels, text, _,  _, _) in enumerate(train_loader, 1):
                     labels = torch.FloatTensor(labels)
                     seq = torch.LongTensor(text)
                     if cuda:
@@ -147,6 +147,9 @@ if __name__ == '__main__':
                     loss = criterion(output, labels)
                     loss.backward()
                     optimizer.step()
+
+                    if idx % 1000 == 0:
+                        log.info("Train Loop: {} done".format(idx))
 
                 y_true, y_pred = eval_utils.gather_outputs(
                     test_set, model, cuda)

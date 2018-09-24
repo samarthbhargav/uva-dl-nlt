@@ -2,6 +2,7 @@ import logging as log
 
 import torch
 import numpy as np
+import torch.nn.functional as F
 
 
 def gather_outputs(data, model, cuda):
