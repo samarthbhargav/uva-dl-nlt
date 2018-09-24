@@ -32,6 +32,11 @@
 
 - [ ] Punctuation marks
 
+# Evaluation - Visualization
+
+- [ ] Accuracy for single-label vs. multi-label instances
+
+- [ ] Visualization of confusion matrix
 
 # Implementation details
 
