@@ -17,6 +17,9 @@ def get_argparser():
         "--data-root", dest="data_root", type=str, required=True, help="location of data")
     parser_train.add_argument(
         "--model", required=True, type=str, choices={"lda", "simple-deep",
-                                                     "doc2vec", "ner-model", "ner-comb-model", 
+                                                     "doc2vec", "ner-model", "ner-comb-model",
                                                      "hi_att", "embedding-glove"}, help="type of model to train")
+    parser_train.add_argument("--composition-method", dest="composition_method", required=False,
+                              type=str, choices={"avg", "min", "max", "sum"},
+                              help="Applicable only for model 'embedding-glove': How to compose embeddings")
     return parser

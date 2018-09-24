@@ -139,6 +139,7 @@ if __name__ == '__main__':
                     Multilabel.f1_scores(y_true, y_pred)))
                 
         elif args.model == "embedding-glove":
+            assert args.composition_method is not None, "Please provide composition method"
             glove_model_path = "./common_persist/glove.pkl"
             if os.path.exists(glove_model_path):
                 log.info("Loading existing glove model")
@@ -147,7 +148,7 @@ if __name__ == '__main__':
                 log.info("Reading and saving glove model")
                 glove = GloVeEmbeddings("./common_persist/embeddings/glove.6B.300d.txt", vocabulary)
                 file_utils.save_obj(glove, glove_model_path)
-            embedding_model = EmbeddingCompositionModel(glove, "avg")
+            embedding_model = EmbeddingCompositionModel(glove, args.composition_method)
             embedding_model.fit(train_loader, test_loader, 30)
         else:
             raise ValueError("Unknown model: {}".format(args.model))

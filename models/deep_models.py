@@ -58,7 +58,7 @@ class MultiLabelMLP(nn.Module):
                 layers["layer_{}_dropout"] = nn.Dropout(dropout)
             prev_hidden_size = hidden_size
         layers["output"] = nn.Linear(prev_hidden_size, output_size)
-        layers["sigmoid_out"] = nn.Sigmoid()
+        #layers["sigmoid_out"] = nn.Sigmoid()
 
         self.layers = nn.Sequential(layers)
     

@@ -58,6 +58,7 @@ class EmbeddingCompositionModel(object):
 
     def __init__(self, embeddings, composition_method):
         assert composition_method in {"avg", "sum", "max", "min"}
+        log.info("Using Composition method: {}".format(composition_method))
         self.embeddings = embeddings
         self.composition_method = self.get_composition_method(
             composition_method)
