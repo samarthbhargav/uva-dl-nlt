@@ -34,7 +34,7 @@ class NERModel(nn.Module):
         # lstm_out, self.hidden = self.lstm(
         #     embeds.view(N, 1, -1), self.hidden)
 
-        #out_fc = None
+        out_fc = None
 
         for i in range(N):
 
@@ -43,9 +43,9 @@ class NERModel(nn.Module):
             # Step through the sequence one element at a time.
             # after each step, hidden contains the hidden state.
             out, self.hidden = self.lstm(concat_emb.view(1, 1, -1), self.hidden)
-            #out_fc = out
+            out_fc = out
 
         # we don't use an activation function here -> since we plan to use BCE_with_logits
-        output = self.fc(out)
+        output = self.fc(out_fc)
         output = output.view(1, -1)
         return output

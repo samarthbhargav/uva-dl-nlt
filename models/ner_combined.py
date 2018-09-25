@@ -34,6 +34,9 @@ class NERCombinedModel(nn.Module):
         embeds_words = self.embedding_ner_word(ner_words)
         embeds_labels = self.embedding_ner(ner_labels)
 
+        out = None
+        out_ner = None
+
         Nd = len(embeds_doc)
         for i in range(Nd):
 
