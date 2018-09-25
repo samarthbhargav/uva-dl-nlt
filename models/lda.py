@@ -14,6 +14,17 @@ from evaluate.multilabel import Multilabel
 
 nlp = spacy.load("en")
 
+MODEL_PATH = os.path.join(os.getcwd(), "checkpoints", "lda")
+
+# directory to save model
+if not os.path.exists(MODEL_PATH):
+    os.makedirs(MODEL_PATH)
+
+logging.basicConfig(
+    filename=os.path.join(MODEL_PATH, 'run.log'),
+    level=logging.DEBUG
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -23,17 +34,13 @@ class LdaModel:
         self.lda = None
         self.vocabulary = vocabulary
         self.modelName = "lda-model-{}".format(num_topics)
-        self.modelPath = os.path.join(os.getcwd(), "checkpoints", "lda")
-
-        # directory to save model
-        if not os.path.exists(self.modelPath):
-            os.makedirs(self.modelPath)
+        self.modelPath = MODEL_PATH
 
         logger.info("Initialized LDA for {} Topics".format(num_topics))
 
     def fit(self, data):
-        pathlib.Path(self.modelPath).mkdir(parents=True, exist_ok=True)
-        modelFile = datapath(os.path.join(self.modelPath, self.modelName))
+        pathlib.Path(MODEL_PATH).mkdir(parents=True, exist_ok=True)
+        modelFile = datapath(os.path.join(MODEL_PATH, self.modelName))
 
         try:
             lda = models.LdaModel.load(modelFile)
