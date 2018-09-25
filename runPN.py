@@ -66,8 +66,13 @@ if __name__ == '__main__':
             #     Multilabel.f1_scores(y_true, y_pred)))
             for epoch in range(epochs):
                 print('epoch', epoch)
+                #count = 0
                 for _id, labels, text, ners, _, _ in train_loader:
 
+                    #count += 1
+                    #if count %10 == 0:
+                    #    print(count)
+                    #    break
                     labels = torch.FloatTensor(labels)
                     model.zero_grad()
                     model.hidden = model.init_hidden()
