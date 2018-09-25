@@ -72,14 +72,15 @@ if __name__ == '__main__':
                     model.zero_grad()
                     model.hidden = model.init_hidden()
 
-                    ner_word_seq = torch.LongTensor(ners[0])
-                    ner_label_seq = torch.LongTensor(ners[1])
+                    if len(ners[0]) != 0:
+                        ner_word_seq = torch.LongTensor(ners[0])
+                        ner_label_seq = torch.LongTensor(ners[1])
 
-                    output = model.forward(ner_word_seq, ner_label_seq)
+                        output = model.forward(ner_word_seq, ner_label_seq)
 
-                    loss = criterion(output, labels)
-                    loss.backward()
-                    optimizer.step()
+                        loss = criterion(output, labels)
+                        loss.backward()
+                        optimizer.step()
 
                 y_true, y_pred = eval_utilsPN.gather_outputs(test_set, model, cuda, args.model)
                 print(y_true)
@@ -106,16 +107,17 @@ if __name__ == '__main__':
                     model.hidden = model.init_hidden()
                     model.hidden_ner = model.init_hidden()
 
-                    seq = torch.LongTensor(text)
+                    if len(ners[0]) != 0:
+                        seq = torch.LongTensor(text)
 
-                    ner_word_seq = torch.LongTensor(ners[0])
-                    ner_label_seq = torch.LongTensor(ners[1])
+                        ner_word_seq = torch.LongTensor(ners[0])
+                        ner_label_seq = torch.LongTensor(ners[1])
 
-                    output = model.forward(seq, ner_word_seq, ner_label_seq)
+                        output = model.forward(seq, ner_word_seq, ner_label_seq)
 
-                    loss = criterion(output, labels)
-                    loss.backward()
-                    optimizer.step()
+                        loss = criterion(output, labels)
+                        loss.backward()
+                        optimizer.step()
 
                 y_true, y_pred = eval_utilsPN.gather_outputs(test_set, model, cuda, args.model)
                 print(y_true)
