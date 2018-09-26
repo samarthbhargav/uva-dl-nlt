@@ -83,36 +83,8 @@ if __name__ == '__main__':
 
 
         elif args.model == "lda":
-            lda = LDA(num_topics=100, vocabulary=vocabulary)
-            lda.fit(train_loader)
-
-            X = []
-            y = []
-            for index, train_datapoint in enumerate(train_loader):
-                X.append(lda.predict(train_datapoint)[0][0])
-                y.append(list(train_datapoint[1][0].numpy()))
-                if (index + 1) % 100 == 0:
-                    print("Predicting LDA {}/{}".format(index + 1, len(train_loader)))
-
-            randomForest = RandomForest()
-            randomForest.fit([X, y])
-
-            groundtruth = []
-            predictions = []
-            for index, test_datapoint in enumerate(test_loader):
-                prediction = randomForest.predict(
-                    [lda.predict(test_datapoint)[0][0]])
-                predictions.extend(prediction.tolist())
-                groundtruth.append(list(test_datapoint[1][0].numpy()))
-                if (index + 1) % 100 == 0:
-                    print(
-                        "Predicting Random Forest {}/{}".format(index + 1, len(test_loader)))
-
-            groundtruth, predictions = np.array(
-                groundtruth), np.array(predictions)
-
-            print("Test F1: {}".format(
-                Multilabel.f1_scores(groundtruth, predictions)))
+            ldaModel = TrainLdaModel(args.num_topics, vocabulary)
+            ldaModel.fit(train_loader, test_loader, args.epochs)
 
         elif args.model == "simple-deep":
             model = SimpleDeepModel(len(train_set.label_dict), len(vocabulary))
