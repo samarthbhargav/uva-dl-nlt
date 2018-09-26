@@ -89,8 +89,7 @@ if __name__ == '__main__':
 
         elif args.model == "lda":
             ldaModel = TrainLdaModel(args.num_topics, vocabulary)
-            ldaModel.train(train_loader)
-            ldaModel.eval(test_loader)
+            ldaModel.fit(train_loader, test_loader, args.epochs)
 
         elif args.model == "simple-deep":
             assert args.epochs > 0, "Provide number of epochs"
