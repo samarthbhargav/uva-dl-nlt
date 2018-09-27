@@ -72,7 +72,7 @@ if __name__ == '__main__':
                 print("Doc2vec model doesn't exist. Creating it...")
                 doc2vec = Doc2Vec(num_words=300,
                                     min_count=2,
-                                    epochs=10,
+                                    epochs=25,
                                     workers=4)
                 train_corpus = doc2vec.tagging(corpus=train_loader)
                 test_corpus = doc2vec.tagging(corpus=test_loader)
@@ -82,9 +82,10 @@ if __name__ == '__main__':
                 print("Doc2vec models created!")
 
             doc2vec.train_doc2vec(train_corpus=train_corpus)
-            clf = doc2vec.build_train_classifier(corpus=train_corpus)
-            doc2vec.build_test_classifier(corpus=test_corpus, clf = clf)
 
+            log_reg_clf, X, y = doc2vec.build_train_classifier(corpus=train_corpus)
+            X_test, y_test = doc2vec.build_test_classifier(corpus=test_corpus, clf = log_reg_clf)
+            doc2vec.random_forest(n_estimators = n_estimators, X = X, y = y, X_test = X_test, y_test = y_test)
 
         elif args.model == "lda":
             ldaModel = TrainLdaModel(args.num_topics, vocabulary)
