@@ -70,8 +70,6 @@ class ReutersDataset(Dataset):
             label_vector[self.label_dict[l]] = 1.
         return label_vector
 
-    # def ret_process_text
-
     def __len__(self):
         return len(self.iter.cat)
 
