@@ -13,10 +13,11 @@ from sklearn.metrics import accuracy_score, f1_score
 # dataloader - > doc2id -> split "train/test" -> modify
 
 class doc2vecModel:
-    def __init__(self, num_words, min_count, epochs):
+    def __init__(self, num_words, min_count, epochs, workers):
         self.num_words = num_words
         self.min_count = min_count
         self.epochs = epochs
+        self.workers = workers
 
         temp = os.path.join(os.getcwd(), "checkpoints", "doc2vec")
         if not os.path.exists(temp):
@@ -29,16 +30,10 @@ class doc2vecModel:
     def tagging(self, corpus, testing = False):
         tags = []
         for _, line in enumerate(corpus):
+            # tagged_class = [np.int(i[0]) for i in line[6]]
             preprocess = [i[0] for i in line[4]]
-            # if it's test set, then you just load the pre-processed dataset
-            if testing:
-                tags.append(preprocess)
-
-            # else, you tag each document with a id and then load the preprocessed dataset
-            else:
-                # tagged_class = [np.int(i[0]) for i in line[6]]
-                tagged_class = [i[0] for i in line[5]]
-                tags.append(gensim.models.doc2vec.TaggedDocument(words = preprocess, tags = tagged_class))
+            tagged_class = [i[0] for i in line[5]]
+            tags.append(gensim.models.doc2vec.TaggedDocument(words = preprocess, tags = tagged_class))
         return tags
 
 
@@ -52,7 +47,8 @@ class doc2vecModel:
         except OSError:
             model = gensim.models.doc2vec.Doc2Vec(vector_size = self.num_words,
                                                   min_count = self.min_count,
-                                                  epochs = self.epochs)
+                                                  epochs = self.epochs,
+                                                  workers = self.workers)
             model.build_vocab(train_corpus)
             model.train(train_corpus, total_examples=model.corpus_count, epochs=model.epochs)
             model.save(modelFile)
@@ -75,20 +71,9 @@ class doc2vecModel:
         print('Training F1 score: {}'.format(f1_score(y, y_prediction, average='micro')))
         return clf
 
-    def build_test_classifier(self, test_corpus, train_corpus, clf):
+    def build_test_classifier(self, corpus, clf):
         print("testing... \|/-")
-        y_test = []
-        X_test = []
-
-        # tagging the test corpus documents
-        for document in test_corpus:
-            each_vector = self.model.infer_vector(document)
-            sims = self.model.docvecs.most_similar([each_vector], topn = 1)
-            doc_id = [docid for docid, sim in sims]
-            labels = [train_corpus[each_docid].tags for each_docid in doc_id]
-            y_test.append(labels[0])
-            X_test.append(each_vector)
-        y_test = tuple(y_test)
+        y_test, X_test = zip(*[(document.tags, self.model.infer_vector(document.words)) for document in corpus])
 
         # predicting labels for the test set
         y_prediction = clf.predict(X_test)

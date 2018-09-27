@@ -56,9 +56,10 @@ if __name__ == '__main__':
         test_loader = DataLoader(test_set, shuffle=False, batch_size=1)
 
         if args.model == "doc2vec":
-            doc2vec_model_path = "common_persist/doc2vec_model5.pkl"
-            train_tagged_path = "common_persist/train_tagged5.pkl"
-            test_tagged_path = "common_persist/test_tagged5.pkl"
+
+            doc2vec_model_path = "common_persist/doc2vec_model.pkl"
+            train_tagged_path = "common_persist/train_tagged.pkl"
+            test_tagged_path = "common_persist/test_tagged.pkl"
 
             if os.path.exists(train_tagged_path and test_tagged_path and doc2vec_model_path):
                 print("Loading existing model and tagged corpus...")
@@ -69,9 +70,12 @@ if __name__ == '__main__':
 
             else:
                 print("Doc2vec model doesn't exist. Creating it...")
-                doc2vec = Doc2Vec(num_words=100, min_count=2, epochs=40)
+                doc2vec = Doc2Vec(num_words=300,
+                                    min_count=2,
+                                    epochs=10,
+                                    workers=4)
                 train_corpus = doc2vec.tagging(corpus=train_loader)
-                test_corpus = doc2vec.tagging(corpus=test_loader, testing=True)
+                test_corpus = doc2vec.tagging(corpus=test_loader)
                 file_utils.save_obj(doc2vec, doc2vec_model_path)
                 file_utils.save_obj(train_corpus, train_tagged_path)
                 file_utils.save_obj(test_corpus, test_tagged_path)
@@ -79,7 +83,7 @@ if __name__ == '__main__':
 
             doc2vec.train_doc2vec(train_corpus=train_corpus)
             clf = doc2vec.build_train_classifier(corpus=train_corpus)
-            doc2vec.build_test_classifier(test_corpus=test_corpus, train_corpus=train_corpus, clf = clf)
+            doc2vec.build_test_classifier(corpus=test_corpus, clf = clf)
 
 
         elif args.model == "lda":
