@@ -8,9 +8,13 @@ import numpy as np
 
 from gensim.test.utils import datapath
 from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, f1_score
 
-# dataloader - > doc2id -> split "train/test" -> modify
+# import random_forest as RandomForestClassifier
+
+import warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 class doc2vecModel:
     def __init__(self, num_words, min_count, epochs, workers):
@@ -57,29 +61,56 @@ class doc2vecModel:
 
 
     def build_train_classifier(self, corpus):
-        print("training!!!----****")
+        print("LOG_REG: training!!!----****")
         y, X = zip(*[(document.tags, self.model.infer_vector(document.words)) for document in corpus])
 
         clf = LogisticRegression()
         clf.fit(X, y)
         y_prediction = clf.predict(X)
 
-        # Training accuracy: 0.8585403526837431
+        # Training accuracy: 0.8024198738576394
         print('Training accuracy: {}'.format(accuracy_score(y, y_prediction)))
 
-        # Training F1 score: 0.8798560389541653
+        # Training F1 score: 0.8137374184271651
         print('Training F1 score: {}'.format(f1_score(y, y_prediction, average='micro')))
-        return clf
+
+        return clf, X, y
 
     def build_test_classifier(self, corpus, clf):
-        print("testing... \|/-")
+        print("LOG_REG: testing... \|/-")
         y_test, X_test = zip(*[(document.tags, self.model.infer_vector(document.words)) for document in corpus])
 
         # predicting labels for the test set
         y_prediction = clf.predict(X_test)
 
-        # Testing accuracy: 0.18615435574693606
+        # Testing accuracy: 0.6594898973169924
         print('Testing accuracy: {}'.format(accuracy_score(y_test, y_prediction)))
 
-        # Testing F1 score: 0.16577840112201964
+        # Testing F1 score: 0.6537962829563463
+        print('Testing F1 score: {}'.format(f1_score(y_test, y_prediction, average='micro')))
+
+        return X_test, y_test
+
+    def random_forest(self, n_estimators, X, y, X_test, y_test):
+        print("RF: training!!!----****")
+        clf = RandomForestClassifier(n_estimators = n_estimators)
+        # clf = RandomForestClassifier()
+
+        clf.fit(X, y)
+
+        y_prediction = clf.predict(X)
+
+        # Training F1 score: 1
+        print('Training accuracy: {}'.format(accuracy_score(y, y_prediction)))
+
+        # Training F1 score: 1
+        print('Training F1 score: {}'.format(f1_score(y, y_prediction, average='micro')))
+
+        # ON THE TEST SET
+        y_prediction = clf.predict(X_test)
+
+        # Testing accuracy: 0.6773766147731036
+        print('Testing accuracy: {}'.format(accuracy_score(y_test, y_prediction)))
+
+        # Testing F1 score: 0.6938892882818116
         print('Testing F1 score: {}'.format(f1_score(y_test, y_prediction, average='micro')))
