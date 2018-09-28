@@ -11,7 +11,7 @@ from evaluate.multilabel import Multilabel
 
 
 class SimpleDeepModel(nn.Module):
-    def __init__(self, num_classes, vocab_size, num_layers, use_cuda=False):
+    def __init__(self, num_classes, vocab_size, num_layers, dropout=None, bidirectional=False, use_cuda=False):
         super().__init__()
         self.use_cuda = use_cuda
         self.embedding_dim = 300
@@ -19,8 +19,13 @@ class SimpleDeepModel(nn.Module):
         self.num_layers = num_layers
         # TODO: Also bi-directional
         self.embedding = nn.Embedding(vocab_size, self.embedding_dim)
+        self.fc_dropout = None
+        lstm_dropout = 0
+        if dropout is not None:
+            lstm_dropout = dropout
+            self.fc_dropout = nn.Dropout(dropout)
         self.lstm = nn.LSTM(self.embedding_dim,
-                            self.hidden_dim, num_layers=self.num_layers)
+                            self.hidden_dim, num_layers=self.num_layers, dropout=lstm_dropout)
         self.fc = nn.Linear(self.hidden_dim, num_classes)
         self.hidden = self.init_hidden()
 
@@ -41,6 +46,8 @@ class SimpleDeepModel(nn.Module):
             out, self.hidden = self.lstm(i.view(1, 1, -1), self.hidden)
 
         # we don't use an activation function here -> since we plan to use BCE_with_logits
+        if self.fc_dropout:
+            out = self.fc_dropout(out)
         output = self.fc(out)
         output = output.view(1, -1)
         return output

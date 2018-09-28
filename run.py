@@ -95,13 +95,16 @@ if __name__ == '__main__':
             ldaModel.fit(train_loader, test_loader, args.epochs)
 
         elif args.model == "simple-deep":
-            model = SimpleDeepModel(len(train_set.label_dict), len(vocabulary))
-
+            model = SimpleDeepModel(len(train_set.label_dict), len(
+                vocabulary), args.n_layers, dropout=args.dropout, bidirectional=args.bidirectional)
             optimizer = optim.Adam(model.parameters())
             criterion = nn.BCEWithLogitsLoss()
             # y_true, y_pred = eval_utils.gather_outputs(test_set, model)
             # log.info("Test F1: {}".format(
             #     Multilabel.f1_scores(y_true, y_pred)))
+            monitor = {
+                "F1": []
+            }
             for epoch in range(args.epochs):
                 for _id, labels, text, _,  _, _ in train_loader:
                     labels = torch.FloatTensor(labels)
@@ -114,8 +117,11 @@ if __name__ == '__main__':
                     optimizer.step()
 
                 y_true, y_pred = eval_utils.gather_outputs(test_set, model)
-                log.info("Test F1: {}".format(
-                    Multilabel.f1_scores(y_true, y_pred)))
+                test_f1 = Multilabel.f1_scores(y_true, y_pred)
+                log.info("Test F1: {}".format(test_f1))
+                monitor["test_f1"].append(test_f1)
+
+            file_utils.save_obj(monitor, "./results_{}".format(args.model_id))
 
         elif args.model == "embedding-glove":
             assert args.composition_method is not None, "Please provide composition method"
