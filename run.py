@@ -71,9 +71,9 @@ if __name__ == '__main__':
             else:
                 print("Doc2vec model doesn't exist. Creating it...")
                 doc2vec = Doc2Vec(num_words=300,
-                                    min_count=2,
-                                    epochs=25,
-                                    workers=4)
+                                  min_count=2,
+                                  epochs=25,
+                                  workers=4)
                 train_corpus = doc2vec.tagging(corpus=train_loader)
                 test_corpus = doc2vec.tagging(corpus=test_loader)
                 file_utils.save_obj(doc2vec, doc2vec_model_path)
@@ -83,9 +83,12 @@ if __name__ == '__main__':
 
             doc2vec.train_doc2vec(train_corpus=train_corpus)
 
-            log_reg_clf, X, y = doc2vec.build_train_classifier(corpus=train_corpus)
-            X_test, y_test = doc2vec.build_test_classifier(corpus=test_corpus, clf = log_reg_clf)
-            doc2vec.random_forest(n_estimators = n_estimators, X = X, y = y, X_test = X_test, y_test = y_test)
+            log_reg_clf, X, y = doc2vec.build_train_classifier(
+                corpus=train_corpus)
+            X_test, y_test = doc2vec.build_test_classifier(
+                corpus=test_corpus, clf=log_reg_clf)
+            doc2vec.random_forest(n_estimators=n_estimators,
+                                  X=X, y=y, X_test=X_test, y_test=y_test)
 
         elif args.model == "lda":
             ldaModel = TrainLdaModel(args.num_topics, vocabulary)
@@ -96,11 +99,10 @@ if __name__ == '__main__':
 
             optimizer = optim.Adam(model.parameters())
             criterion = nn.BCEWithLogitsLoss()
-            epochs = 10
             # y_true, y_pred = eval_utils.gather_outputs(test_set, model)
             # log.info("Test F1: {}".format(
             #     Multilabel.f1_scores(y_true, y_pred)))
-            for epoch in range(epochs):
+            for epoch in range(args.epochs):
                 for _id, labels, text, _,  _, _ in train_loader:
                     labels = torch.FloatTensor(labels)
                     model.zero_grad()
@@ -123,10 +125,12 @@ if __name__ == '__main__':
                 glove = file_utils.load_obj(glove_model_path)
             else:
                 log.info("Reading and saving glove model")
-                glove = GloVeEmbeddings("./common_persist/embeddings/glove.6B.300d.txt", vocabulary)
+                glove = GloVeEmbeddings(
+                    "./common_persist/embeddings/glove.6B.300d.txt", vocabulary)
                 file_utils.save_obj(glove, glove_model_path)
-            embedding_model = EmbeddingCompositionModel(glove, args.composition_method)
-            embedding_model.fit(train_loader, test_loader, 30)
+            embedding_model = EmbeddingCompositionModel(
+                glove, args.composition_method)
+            embedding_model.fit(train_loader, test_loader, args.epochs)
         else:
             raise ValueError("Unknown model: {}".format(args.model))
 
