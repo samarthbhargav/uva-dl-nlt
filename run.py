@@ -71,9 +71,10 @@ if __name__ == '__main__':
             else:
                 print("Doc2vec model doesn't exist. Creating it...")
                 doc2vec = Doc2Vec(num_words=300,
-                                    min_count=2,
-                                    epochs=100,
-                                    workers=4)
+                                  min_count=2,
+                                  epochs=100,
+                                  workers=4)
+                
                 train_corpus = doc2vec.tagging(corpus=train_loader)
                 test_corpus = doc2vec.tagging(corpus=test_loader)
                 file_utils.save_obj(doc2vec, doc2vec_model_path)
@@ -92,15 +93,17 @@ if __name__ == '__main__':
             ldaModel.fit(train_loader, test_loader, args.epochs)
 
         elif args.model == "simple-deep":
-            model = SimpleDeepModel(len(train_set.label_dict), len(vocabulary))
-
+            model = SimpleDeepModel(len(train_set.label_dict), len(
+                vocabulary), args.n_layers, dropout=args.dropout, bidirectional=args.bidirectional)
             optimizer = optim.Adam(model.parameters())
             criterion = nn.BCEWithLogitsLoss()
-            epochs = 10
             # y_true, y_pred = eval_utils.gather_outputs(test_set, model)
             # log.info("Test F1: {}".format(
             #     Multilabel.f1_scores(y_true, y_pred)))
-            for epoch in range(epochs):
+            monitor = {
+                "F1": []
+            }
+            for epoch in range(args.epochs):
                 for _id, labels, text, _,  _, _ in train_loader:
                     labels = torch.FloatTensor(labels)
                     model.zero_grad()
@@ -112,8 +115,11 @@ if __name__ == '__main__':
                     optimizer.step()
 
                 y_true, y_pred = eval_utils.gather_outputs(test_set, model)
-                log.info("Test F1: {}".format(
-                    Multilabel.f1_scores(y_true, y_pred)))
+                test_f1 = Multilabel.f1_scores(y_true, y_pred)
+                log.info("Test F1: {}".format(test_f1))
+                monitor["test_f1"].append(test_f1)
+
+            file_utils.save_obj(monitor, "./results_{}".format(args.model_id))
 
         elif args.model == "embedding-glove":
             assert args.composition_method is not None, "Please provide composition method"
@@ -123,10 +129,12 @@ if __name__ == '__main__':
                 glove = file_utils.load_obj(glove_model_path)
             else:
                 log.info("Reading and saving glove model")
-                glove = GloVeEmbeddings("./common_persist/embeddings/glove.6B.300d.txt", vocabulary)
+                glove = GloVeEmbeddings(
+                    "./common_persist/embeddings/glove.6B.300d.txt", vocabulary)
                 file_utils.save_obj(glove, glove_model_path)
-            embedding_model = EmbeddingCompositionModel(glove, args.composition_method)
-            embedding_model.fit(train_loader, test_loader, 30)
+            embedding_model = EmbeddingCompositionModel(
+                glove, args.composition_method)
+            embedding_model.fit(train_loader, test_loader, args.epochs)
         else:
             raise ValueError("Unknown model: {}".format(args.model))
 

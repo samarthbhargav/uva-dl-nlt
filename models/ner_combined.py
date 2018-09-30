@@ -13,8 +13,8 @@ class NERCombinedModel(nn.Module):
         self.embedding_ner = nn.Embedding(ner_ent_vocab_size, self.embedding_dim)
         self.embedding_ner_word = nn.Embedding(ner_word_vocab_size, self.embedding_dim)
 
-        self.lstm = nn.LSTM(self.embedding_dim, self.hidden_dim, num_layers=1)
-        self.lstm_NER = nn.LSTM(self.embedding_dim*2, self.hidden_dim, num_layers=1)
+        self.lstm = nn.LSTM(self.embedding_dim, self.hidden_dim, num_layers=1, batch_first=True)
+        self.lstm_NER = nn.LSTM(self.embedding_dim*2, self.hidden_dim, num_layers=1, batch_first=True)
 
         self.fc = nn.Linear(self.hidden_dim*2, num_classes)
 
@@ -34,32 +34,13 @@ class NERCombinedModel(nn.Module):
         embeds_words = self.embedding_ner_word(ner_words)
         embeds_labels = self.embedding_ner(ner_labels)
 
-        out = None
-        out_ner = None
+        concat_emb = torch.cat((embeds_words, embeds_labels),1)
 
-        Nd = len(embeds_doc)
-        for i in range(Nd):
+        out_ner, self.hidden_ner = self.lstm_NER(concat_emb.view(1, concat_emb.size()[0],-1), self.hidden_ner)
 
-            # Step through the sequence one element at a time.
-            # after each step, hidden contains the hidden state.
+        out, self.hidden = self.lstm(embeds_doc.view(1,embeds_doc.size()[0], -1), self.hidden)
 
-            out, self.hidden = self.lstm(embeds_doc[i].view(1, 1, -1), self.hidden)
-
-
-        N = len(ner_words)
-        # lstm_out, self.hidden = self.lstm(
-        #     embeds.view(N, 1, -1), self.hidden)
-        for i in range(N):
-
-            concat_emb = torch.cat((embeds_words[i], embeds_labels[i]),0)
-            # Step through the sequence one element at a time.
-            # after each step, hidden contains the hidden state.
-
-            out_ner, self.hidden_ner = self.lstm_NER(concat_emb.view(1, 1, -1), self.hidden_ner)
-
-        # we don't use an activation function here -> since we plan to use BCE_with_logits
-
-        out_fc = torch.cat((out, out_ner),2)
+        out_fc = torch.cat((out[0][-1], out_ner[0][-1]),0)
 
         output = self.fc(out_fc)
         output = output.view(1, -1)
