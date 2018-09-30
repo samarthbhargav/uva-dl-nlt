@@ -68,10 +68,8 @@ class doc2vecModel:
         clf.fit(X, y)
         y_prediction = clf.predict(X)
 
-        # Training accuracy: 0.8024198738576394
         print('Training accuracy: {}'.format(accuracy_score(y, y_prediction)))
 
-        # Training F1 score: 0.8137374184271651
         print('Training F1 score: {}'.format(f1_score(y, y_prediction, average='micro')))
 
         return clf, X, y
@@ -79,14 +77,12 @@ class doc2vecModel:
     def build_test_classifier(self, corpus, clf):
         print("LOG_REG: testing... \|/-")
         y_test, X_test = zip(*[(document.tags, self.model.infer_vector(document.words)) for document in corpus])
-
         # predicting labels for the test set
+
         y_prediction = clf.predict(X_test)
 
-        # Testing accuracy: 0.6594898973169924
         print('Testing accuracy: {}'.format(accuracy_score(y_test, y_prediction)))
 
-        # Testing F1 score: 0.6537962829563463
         print('Testing F1 score: {}'.format(f1_score(y_test, y_prediction, average='micro')))
 
         return X_test, y_test
@@ -94,23 +90,32 @@ class doc2vecModel:
     def random_forest(self, n_estimators, X, y, X_test, y_test):
         print("RF: training!!!----****")
         clf = RandomForestClassifier(n_estimators = n_estimators)
-        # clf = RandomForestClassifier()
 
         clf.fit(X, y)
 
         y_prediction = clf.predict(X)
 
-        # Training F1 score: 1
         print('Training accuracy: {}'.format(accuracy_score(y, y_prediction)))
 
-        # Training F1 score: 1
         print('Training F1 score: {}'.format(f1_score(y, y_prediction, average='micro')))
 
         # ON THE TEST SET
+        print("RF: testing... \|/-")
         y_prediction = clf.predict(X_test)
 
-        # Testing accuracy: 0.6773766147731036
         print('Testing accuracy: {}'.format(accuracy_score(y_test, y_prediction)))
 
-        # Testing F1 score: 0.6938892882818116
         print('Testing F1 score: {}'.format(f1_score(y_test, y_prediction, average='micro')))
+
+
+# LOG_REG: training!!!----****
+# Training accuracy: 0.7999742566610889
+# Training F1 score: 0.8120567375886526
+# LOG_REG: testing... \|/-
+# Testing accuracy: 0.6548526001987413
+# Testing F1 score: 0.6528377989052147
+# RF: training!!!----****
+# Training accuracy: 1.0
+# Training F1 score: 1.0
+# Testing accuracy: 0.6767141437562106
+# Testing F1 score: 0.6931459707484945
