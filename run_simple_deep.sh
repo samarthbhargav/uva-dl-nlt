@@ -1,5 +1,5 @@
 DATA_ROOT=./data/reuters
-PREFIX="python run.py train --data-root $DATA_ROOT "
+PREFIX="srun --gres=gpu:1 -p fatq python run.py train --data-root $DATA_ROOT "
 
 ## Simple Deep Models, non-bi Directional
 NUM_EPOCHS=15
