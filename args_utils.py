@@ -18,11 +18,11 @@ def get_argparser():
     parser_train.add_argument(
         "--model", required=True, type=str, choices={"han", "lda", "simple-deep",
                                                      "doc2vec", "ner-model", "ner-comb-model",
-                                                     "hi_att", "embedding-glove"}, help="type of model to train")
+                                                     "hi_att", "embedding-glove", "tfidf"}, help="type of model to train")
     parser_train.add_argument("--model-id", required=True, type=str,
                               help="ID of the model. Used for persisting results")
     parser_train.add_argument("--epochs", type=int, default=10,
-                              help="Number of epochs to run. Applicable only to some models (deep)")
+                              help="[embedding-glove, simple-deep] Number of epochs to run")
     parser_train.add_argument("--composition-method", dest="composition_method", required=False,
                               type=str, choices={"avg", "min", "max", "sum"},
                               help="[embedding-glove] How to compose embeddings")
@@ -32,7 +32,7 @@ def get_argparser():
                               dest="bidirectional", help="[simple-deep] Use bi-directional LSTM ")
     parser_train.add_argument("--dropout", type=float, default=0.3,
                               help="[simple-deep] (variational) Dropout (resused in LSTM/Fully connected as well)")
-
+    parser_train.add_argument("--cuda", action="store_true", default=False)
     parser_train.add_argument("--num-topics",
                               dest="num_topics",
                               type=int,

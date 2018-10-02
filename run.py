@@ -15,6 +15,7 @@ from data_utils.dataloader import ReutersDataset, ReutersDatasetIterator
 
 from models.lda import LdaModel as LDA
 from models.doc2vec import doc2vecModel as Doc2Vec
+from models.tfidf import TfidfModel
 from models.deep_models import SimpleDeepModel
 from models.random_forest import RandomForestModel as RandomForest
 from models.embedding_models import GloVeEmbeddings, EmbeddingCompositionModel
@@ -93,10 +94,16 @@ if __name__ == '__main__':
         elif args.model == "lda":
             ldaModel = TrainLdaModel(args.num_topics, vocabulary)
             ldaModel.fit(train_loader, test_loader, args.epochs)
+        elif args.model == "tfidf":
+            tfidf_model = TfidfModel()
+            tfidf_model.train(train_loader, test_loader)
 
         elif args.model == "simple-deep":
             model = SimpleDeepModel(len(train_set.label_dict), len(
-                vocabulary), args.n_layers, dropout=args.dropout, bidirectional=args.bidirectional)
+                vocabulary), args.n_layers, dropout=args.dropout,
+                bidirectional=args.bidirectional, use_cuda=args.cuda)
+            if args.cuda:
+                model = model.cuda()
             optimizer = optim.Adam(model.parameters())
             criterion = nn.BCEWithLogitsLoss()
             # y_true, y_pred = eval_utils.gather_outputs(test_set, model)
@@ -111,12 +118,15 @@ if __name__ == '__main__':
                     model.zero_grad()
                     model.hidden = model.init_hidden()
                     seq = torch.LongTensor(text)
+                    if args.cuda:
+                        labels, seq = labels.cuda(), seq.cuda()
                     output = model.forward(seq)
                     loss = criterion(output, labels)
                     loss.backward()
                     optimizer.step()
 
-                y_true, y_pred = eval_utils.gather_outputs(test_set, model)
+                y_true, y_pred = eval_utils.gather_outputs(
+                    test_set, model, args.cuda)
                 test_f1 = Multilabel.f1_scores(y_true, y_pred)
                 log.info("Test F1: {}".format(test_f1))
                 monitor["test_f1"].append(test_f1)
