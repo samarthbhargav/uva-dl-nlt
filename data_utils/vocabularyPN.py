@@ -6,6 +6,8 @@ import spacy
 
 
 class Vocabulary:
+
+    PAD = "<PAD>"
     UNK = "<UNK>"
     SOS = "<SOS>"
     EOS = "<EOS>"
@@ -96,6 +98,10 @@ class Vocabulary:
 
         print(ner_set)
         ner_set = set(ner_set)
+
+        #PADDING 0
+        self.vocab[self.PAD] = 0
+        self.vocab_ner[self.PAD] = 0
 
         for ner in ner_set:
             self.vocab_ner[ner] = len(self.vocab_ner)

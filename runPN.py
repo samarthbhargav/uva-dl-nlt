@@ -60,19 +60,19 @@ if __name__ == '__main__':
 
             optimizer = optim.Adam(model.parameters())
             criterion = nn.BCEWithLogitsLoss()
-            epochs = 10
+            epochs = 20
             # y_true, y_pred = eval_utils.gather_outputs(test_set, model)
             # log.info("Test F1: {}".format(
             #     Multilabel.f1_scores(y_true, y_pred)))
             for epoch in range(epochs):
                 print('epoch', epoch)
-                #count = 0
+                count = 0
                 for _id, labels, text, ners, _, _ in train_loader:
 
-                    #count += 1
-                    #if count %10 == 0:
-                    #    print(count)
-                    #    break
+                    count += 1
+                    if count %1000 == 0:
+                       print(count)
+                    #   break
                     labels = torch.FloatTensor(labels)
                     model.zero_grad()
                     model.hidden = model.init_hidden()
@@ -87,9 +87,11 @@ if __name__ == '__main__':
                         loss.backward()
                         optimizer.step()
 
+                y_true, y_pred = eval_utilsPN.gather_outputs(train_set, model, cuda, args.model)
+                log.info("Train F1: {}".format(
+                    Multilabel.f1_scores(y_true, y_pred)))
+
                 y_true, y_pred = eval_utilsPN.gather_outputs(test_set, model, cuda, args.model)
-                print(y_true)
-                print(y_pred)
                 log.info("Test F1: {}".format(
                     Multilabel.f1_scores(y_true, y_pred)))
 
@@ -99,13 +101,19 @@ if __name__ == '__main__':
 
             optimizer = optim.Adam(model.parameters())
             criterion = nn.BCEWithLogitsLoss()
-            epochs = 10
+            epochs = 20
             # y_true, y_pred = eval_utils.gather_outputs(test_set, model)
             # log.info("Test F1: {}".format(
             #     Multilabel.f1_scores(y_true, y_pred)))
             for epoch in range(epochs):
                 print('epoch', epoch)
+                count = 0
                 for _id, labels, text, ners, _ , _ in train_loader:
+
+                    count += 1
+                    if count % 1000 == 0:
+                        print(count)
+                    #    break
 
                     labels = torch.FloatTensor(labels)
                     model.zero_grad()
@@ -124,9 +132,11 @@ if __name__ == '__main__':
                         loss.backward()
                         optimizer.step()
 
+                y_true, y_pred = eval_utilsPN.gather_outputs(train_set, model, cuda, args.model)
+                log.info("Train F1: {}".format(
+                    Multilabel.f1_scores(y_true, y_pred)))
+
                 y_true, y_pred = eval_utilsPN.gather_outputs(test_set, model, cuda, args.model)
-                print(y_true)
-                print(y_pred)
                 log.info("Test F1: {}".format(
                     Multilabel.f1_scores(y_true, y_pred)))
 

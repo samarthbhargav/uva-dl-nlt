@@ -12,7 +12,7 @@ class NERModel(nn.Module):
         self.embedding = nn.Embedding(ner_word_vocab_size, self.embedding_dim)
         self.embedding_ner = nn.Embedding(ner_ent_vocab_size, self.embedding_dim)
 
-        self.lstm = nn.LSTM(self.embedding_dim*2, self.hidden_dim, num_layers=1)
+        self.lstm = nn.LSTM(self.embedding_dim*2, self.hidden_dim, num_layers=1, batch_first=True)
 
         self.fc = nn.Linear(self.hidden_dim, num_classes)
 
@@ -30,22 +30,13 @@ class NERModel(nn.Module):
         embeds_words = self.embedding(ner_words)
         embeds_labels = self.embedding_ner(ner_labels)
 
-        N = len(ner_words)
-        # lstm_out, self.hidden = self.lstm(
-        #     embeds.view(N, 1, -1), self.hidden)
+        concat_emb = torch.cat((embeds_words, embeds_labels),1)
 
-        out_fc = None
-
-        for i in range(N):
-
-            concat_emb = torch.cat((embeds_words[i], embeds_labels[i]),0)
-
-            # Step through the sequence one element at a time.
-            # after each step, hidden contains the hidden state.
-            out, self.hidden = self.lstm(concat_emb.view(1, 1, -1), self.hidden)
-            out_fc = out
+        # Step through the sequence one element at a time.
+        # after each step, hidden contains the hidden state.
+        out, self.hidden = self.lstm(concat_emb.view(1, concat_emb.size()[0],-1), self.hidden)
 
         # we don't use an activation function here -> since we plan to use BCE_with_logits
-        output = self.fc(out_fc)
+        output = self.fc(out[0][-1])
         output = output.view(1, -1)
         return output
