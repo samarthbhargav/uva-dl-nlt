@@ -120,7 +120,7 @@ if __name__ == '__main__':
             # log.info("Test F1: {}".format(
             #     Multilabel.f1_scores(y_true, y_pred)))
             monitor = {
-                "F1": []
+                "test_f1": []
             }
             for epoch in range(args.epochs):
                 for _id, labels, text, _,  _, _ in train_loader:
