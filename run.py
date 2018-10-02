@@ -29,13 +29,13 @@ if __name__ == '__main__':
     if args.verbose:
         log.basicConfig(
             filename='run.log',
-            level=logging.DEBUG,
+            level=log.DEBUG,
             format='%(asctime)s %(name)s %(levelname)s %(message)s'
         )
     else:
         log.basicConfig(
             filename='run.log',
-            level=logging.INFO,
+            level=log.INFO,
             format='%(asctime)s %(name)s %(levelname)s %(message)s'
         )
 
