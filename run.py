@@ -105,7 +105,8 @@ if __name__ == '__main__':
             ldaModel.fit(train_loader, test_loader, args.epochs)
         elif args.model == "tfidf":
             tfidf_model = TfidfModel()
-            tfidf_model.train(train_loader, test_loader)
+            monitor = tfidf_model.train(train_loader, test_loader)
+            file_utils.save_obj(monitor, "./results_{}".format(args.model_id))
 
         elif args.model == "simple-deep":
             model = SimpleDeepModel(len(train_set.label_dict), len(
@@ -155,7 +156,9 @@ if __name__ == '__main__':
                 file_utils.save_obj(glove, glove_model_path)
             embedding_model = EmbeddingCompositionModel(
                 glove, args.composition_method)
-            embedding_model.fit(train_loader, test_loader, args.epochs)
+            monitor = embedding_model.fit(
+                train_loader, test_loader, args.epochs)
+            file_utils.save_obj(monitor, "./results_{}".format(args.model_id))
         else:
             raise ValueError("Unknown model: {}".format(args.model))
 

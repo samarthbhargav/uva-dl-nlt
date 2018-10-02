@@ -45,4 +45,9 @@ class TfidfModel(object):
 
         clf.fit(X_train, y_train)
 
-        print(Multilabel.f1_scores(y_test, clf.predict(X_test)))
+        monitor = {
+            "test_F1": Multilabel.f1_scores(y_test, clf.predict(X_test)),
+            "train_F1": Multilabel.f1_scores(y_train, clf.predict(X_train))
+        }
+
+        return monitor

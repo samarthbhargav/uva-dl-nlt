@@ -128,6 +128,10 @@ class EmbeddingCompositionModel(object):
         log.info("Test F1: {}".format(
             Multilabel.f1_scores(y_true, y_pred)))
 
+        monitor = {
+            "train_F1": [],
+            "test_F1": []
+        }
         for epoch in range(epochs):
             log.info("Epoch: {}".format(epoch))
             self.model.train(True)
@@ -143,8 +147,12 @@ class EmbeddingCompositionModel(object):
                 #log.info("Loss: {}".format(loss.item()))
 
             y_true, y_pred = self.gather_outputs(test_loader)
-            log.info("Test F1: {}".format(
-                Multilabel.f1_scores(y_true, y_pred)))
+            test_f1 = Multilabel.f1_scores(y_true, y_pred)
+            log.info("Test F1: {}".format(test_f1))
             y_true, y_pred = self.gather_outputs(train_loader)
-            log.info("Train F1: {}".format(
-                Multilabel.f1_scores(y_true, y_pred)))
+            train_f1 = Multilabel.f1_scores(y_true, y_pred)
+            log.info("Train F1: {}".format(train_f1))
+            monitor["train_F1"].append(train_f1)
+            monitor["test_F1"].append(test_f1)
+
+        return monitor
