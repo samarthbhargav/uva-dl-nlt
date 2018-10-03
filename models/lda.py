@@ -27,10 +27,10 @@ MODEL_PATH = os.path.join(os.getcwd(), "checkpoints", "lda")
 if not os.path.exists(MODEL_PATH):
     os.makedirs(MODEL_PATH)
 
-logging.basicConfig(
-    filename=os.path.join(MODEL_PATH, 'run.log'),
-    level=logging.DEBUG
-)
+# logging.basicConfig(
+#     filename=os.path.join(MODEL_PATH, 'run.log'),
+#     level=logging.DEBUG
+# )
 
 logger = logging.getLogger(__name__)
 

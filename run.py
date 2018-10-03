@@ -1,4 +1,5 @@
 import os
+import sys
 import numpy as np
 import logging as log
 
@@ -26,19 +27,20 @@ from evaluate.multilabel import Multilabel
 if __name__ == '__main__':
     args = get_argparser().parse_args()
 
-    if args.verbose:
-        log.basicConfig(
-            filename='run.log',
-            level=log.DEBUG,
-            format='%(asctime)s %(name)s %(levelname)s %(message)s'
-        )
-    else:
-        log.basicConfig(
-            filename='run.log',
-            level=log.INFO,
-            format='%(asctime)s %(name)s %(levelname)s %(message)s'
-        )
+    file_handler = log.FileHandler(filename='run.log')
+    stdout_handler = log.StreamHandler(sys.stdout)
+    handlers = [file_handler, stdout_handler]
 
+    log_level = {
+        True: log.DEBUG,
+        False: log.INFO
+    }[args.verbose]
+
+    log.basicConfig(
+        level=log_level,
+        handlers=handlers,
+        format='%(asctime)s %(name)s %(levelname)s %(message)s'
+    )
     remove_stopwords = True
     min_freq = 5
     lowercase = True
