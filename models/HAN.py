@@ -63,7 +63,7 @@ class WordAttention(nn.Module):
 
 
 class SentAttention(nn.Module):
-    def __init__(self, batch_size, embedding_size, cls_num, GRU_dropout):
+    def __init__(self, batch_size, embedding_size, cls_num, GRU_dropout, cls_dropout):
 
         super(SentAttention, self).__init__()
 
@@ -83,7 +83,11 @@ class SentAttention(nn.Module):
         self.sent_att_context_lin = nn.Linear(self.word_att_size, 1, bias=False)
 
         self.classifier1 = nn.Linear(self.word_att_size, self.cls_num, bias=True)
+
+        self.classifier_dropout = torch.nn.Dropout(p=cls_dropout, inplace=False)
+
         self.classifier2 = nn.Linear(self.cls_num, self.cls_num, bias=True)
+
     def init_hidden(self):
         return Variable(torch.zeros(2, self.batch_size, self.GRU_hid_size))
 
@@ -107,6 +111,7 @@ class SentAttention(nn.Module):
         attended = a * sent_total_out
         sent_att = attended.sum(1, False)
         hidden_cls = F.relu(self.classifier1(sent_att))
+        hidden_cls = self.classifier_dropout(hidden_cls)
         predictions = self.classifier2(hidden_cls)
         return predictions
 
@@ -116,22 +121,25 @@ class hanTrainer(object):
     def __init__(self, embeddings):
 
         self.embeddings = embeddings
-        self.batch_size = 64
+        self.batch_size = 128
         self.max_sent_len = 20  # Note: if you change it here you have to change it in vocabularyHAN.py as well
         self.max_num_sent = 10  # same for this... Should refactor this.
         self.embedding_size = 300
         self.learning_rate = 0.005#0.005
         self.learning_rate_type = "step" #"normal"
-        #self.learning_rate_type = "normal"
-        self.exp_num = 9
+        # self.learning_rate_type = "normal"
+        self.weight_decay = 0.000001
+        self.cls_dropout = 0.1
+        self.exp_num = 16
         self.log_file_path = "D:\\courses\\dl4nlt\\results\\"
-        self.neg_weight = 0.4
-        self.GRU_dropout = 0.4
+        self.neg_weight = 0.2
+        self.GRU_dropout = 0.2
 
         self.word_attention = WordAttention(batch_size=self.batch_size, embedding_size=self.embedding_size,
                                             GRU_dropout=self.GRU_dropout)
-        self.sent_attention = SentAttention(batch_size=self.batch_size, embedding_size=self.embedding_size, cls_num=90,
-                                            GRU_dropout=self.GRU_dropout)
+        self.sent_attention = SentAttention(batch_size=self.batch_size, embedding_size=self.embedding_size,
+                                            cls_num=90, GRU_dropout=self.GRU_dropout,
+                                            cls_dropout=self.cls_dropout)
         self.cuda = torch.cuda.is_available() #and False
         self.log_hyperparams()
         log.info("Using CUDA: {}".format(self.cuda))
@@ -142,7 +150,10 @@ class hanTrainer(object):
         for sent in sequence:
             sentence = []
             for _id in sent:
-                emb = self.embeddings[_id]
+                try:
+                    emb = self.embeddings[_id]
+                except:
+                    emb = [-1] * self.embedding_size
                 if emb is None:
                     emb = [-1] * self.embedding_size
                 sentence.append(emb)
@@ -216,8 +227,10 @@ class hanTrainer(object):
             self.word_attention = self.word_attention.cuda()
             self.sent_attention = self.sent_attention.cuda()
 
-        word_optimizer = optim.Adam(self.word_attention.parameters(), lr=self.learning_rate)
-        sent_optimizer = optim.Adam(self.sent_attention.parameters(), lr=self.learning_rate)
+        word_optimizer = optim.Adam(self.word_attention.parameters(), lr=self.learning_rate,
+                                    weight_decay=self.weight_decay)
+        sent_optimizer = optim.Adam(self.sent_attention.parameters(), lr=self.learning_rate,
+                                    weight_decay=self.weight_decay)
         scheduler_word = torch.optim.lr_scheduler.StepLR(word_optimizer, step_size=40, gamma=0.2)
         scheduler_sent = torch.optim.lr_scheduler.StepLR(sent_optimizer, step_size=40, gamma=0.2)
         best_fscore = 0
@@ -289,6 +302,8 @@ class hanTrainer(object):
         f.write("max_sent_len:{}\n".format(self.max_sent_len))
         f.write("max_num_sent:{}\n".format(self.max_num_sent))
         f.write("gru_dropout:{}\n".format(self.GRU_dropout))
+        f.write("L2_coef:{}\n".format(self.weight_decay))
+        f.write("cls_dropout:{}\n".format(self.cls_dropout))
         f.write("------------------------------\n")
         f.close()
 
