@@ -54,9 +54,7 @@ class LdaModel:
         self.lda = lda
 
     def predict(self, texts):
-        print(texts)
         x = [list(zip(*sorted(self.lda[text], key=lambda _: _[0]))) for text in self.doc2bow([texts])]
-        print(x)
         return x
 
     def doc2bow(self, data):
