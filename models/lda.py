@@ -1,6 +1,7 @@
 import os
 import pathlib
 import logging
+from datetime import datetime
 
 import spacy
 
@@ -86,7 +87,7 @@ class TrainLdaModel:
         # for plotting
         self.trainAccuracies = []
         self.testAccuracies = []
-        self.plotName = "accuracy-{}.png".format(num_topics)
+        self.plotName = "accuracy-{}-{}.png".format(num_topics, datetime.now().strftime("%Y-%m-%d %H:%M"))
 
     def _batch(self, loader, batch_size):
         batch = []
@@ -129,7 +130,7 @@ class TrainLdaModel:
         if self.cuda:
             self.model = self.model.cuda()
 
-        optimizer = optim.Adam(self.model.parameters())
+        optimizer = optim.Adam(self.model.parameters(), lr=0.0001, weight_decay=0.2)
         criterion = nn.BCEWithLogitsLoss()
 
         self.eval(train_loader, test_loader)
@@ -146,7 +147,7 @@ class TrainLdaModel:
                 loss.backward()
                 optimizer.step()
 
-                logger.debug("Loss: {}".format(loss.item()))
+                #logger.debug("Loss: {}".format(loss.item()))
 
             self.eval(train_loader, test_loader)
 
