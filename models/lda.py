@@ -28,11 +28,6 @@ MODEL_PATH = os.path.join(os.getcwd(), "checkpoints", "lda")
 if not os.path.exists(MODEL_PATH):
     os.makedirs(MODEL_PATH)
 
-# logging.basicConfig(
-#     filename=os.path.join(MODEL_PATH, 'run.log'),
-#     level=logging.DEBUG
-# )
-
 logger = logging.getLogger(__name__)
 
 
@@ -59,7 +54,8 @@ class LdaModel:
         self.lda = lda
 
     def predict(self, texts):
-        return [list(zip(*sorted(self.lda[text], key=lambda _: -_[1]))) for text in self.doc2bow([texts])]
+        x = [list(zip(*sorted(self.lda[text], key=lambda _: _[0]))) for text in self.doc2bow([texts])]
+        return x
 
     def doc2bow(self, data):
         wordsPerDocument = [[int(tensor) for tensor in datapoint[2]] for datapoint in data]
@@ -100,7 +96,7 @@ class TrainLdaModel:
                 yield torch.FloatTensor(batch), torch.FloatTensor(labels_batch)
                 batch = []
                 labels_batch = []
-            batch.append(self.lda.predict(datapoint)[0][0])
+            batch.append(self.lda.predict(datapoint)[0][1])
             labels_batch.append(datapoint[1].numpy()[0])
 
         if len(batch) > 0:
