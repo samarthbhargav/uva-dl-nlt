@@ -96,7 +96,7 @@ class TrainLdaModel:
                 yield torch.FloatTensor(batch), torch.FloatTensor(labels_batch)
                 batch = []
                 labels_batch = []
-            batch.append(self.lda.predict(datapoint)[0][0])
+            batch.append(self.lda.predict(datapoint)[0][1])
             labels_batch.append(datapoint[1].numpy()[0])
 
         if len(batch) > 0:
