@@ -17,7 +17,6 @@ class SimpleDeepModel(nn.Module):
         self.embedding_dim = 300
         self.hidden_dim = 500
         self.num_layers = num_layers
-        # TODO: Also bi-directional
         self.embedding = nn.Embedding(vocab_size, self.embedding_dim)
         self.fc_dropout = None
         lstm_dropout = 0
