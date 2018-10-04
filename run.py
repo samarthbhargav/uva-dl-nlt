@@ -14,7 +14,7 @@ from args_utils import get_argparser
 from data_utils.vocabulary import Vocabulary
 from data_utils.dataloader import ReutersDataset, ReutersDatasetIterator
 
-from models.lda import LdaModel as LDA
+from models.lda import TrainLdaModel
 from models.doc2vec import doc2vecModel as Doc2Vec
 from models.tfidf import TfidfModel
 from models.deep_models import SimpleDeepModel
