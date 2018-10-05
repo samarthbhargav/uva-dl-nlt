@@ -37,7 +37,11 @@ chmod +x run_embedding_glove.sh
 ###  NER
 
 ```
-TODO
+# for the NER model only
+python runPN.py train --data-root ./data/reuters/ --model ner-model
+
+# for the NER model combined with a word LSTM
+python runPN.py train --data-root ./data/reuters/ --model ner-comb-model
 ```
 
 ### Doc2Vec
