@@ -1,3 +1,7 @@
+# To Run Code:
+
+```python run.py train --data-root ./data/reuters/ --model lda --model-id 1```
+
 # Possible ideas
 
 - [ ] Sentence representations
@@ -44,6 +48,4 @@
 
 - [ ] Batches pad packed sequence#s etc. to make training faster
 
-# To Run Code:
 
-```python run.py train --data-root ./data/reuters/ --model doc2vec```

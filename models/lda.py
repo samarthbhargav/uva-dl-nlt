@@ -54,8 +54,7 @@ class LdaModel:
         self.lda = lda
 
     def predict(self, texts):
-        x = [list(zip(*sorted(self.lda[text], key=lambda _: _[0]))) for text in self.doc2bow([texts])]
-        return x
+        return [list(zip(*sorted(self.lda[text], key=lambda _: -_[1]))) for text in self.doc2bow([texts])]
 
     def doc2bow(self, data):
         wordsPerDocument = [[int(tensor) for tensor in datapoint[2]] for datapoint in data]
