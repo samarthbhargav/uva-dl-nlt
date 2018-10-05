@@ -1,51 +1,63 @@
-# To Run Code:
+# Document Classification
 
-```python run.py train --data-root ./data/reuters/ --model lda --model-id 1```
+This reposity contains code for the Documentation Classification task on the Reuters Dataset, for the course `Deep Learning for Natural Language Technology` (2018) taught by Christoph Monz. 
 
-# Possible ideas
+Team:
+- Masoumeh Bakhtiariziabari
+- Samarth Bhargav
+- Gulfaraz Rahman
+- Tharangni Harsha Sivaji
+- Ece Takmaz
 
-- [ ] Sentence representations
+## Models
 
-- [ ] Long sequence classification with LSTM (Sequence labeling)
+### Tf-idf
 
-- [ ] CNN-like moving windows of words sequences
+To run:
 
-- [ ] Summarization
+```
+chmod +x run_tfidf.sh
+./run_tfidf.sh
+```
 
-- [x] Random forest
+### LDA
 
-- [ ] Bag-of-words model
+```
+NUM_TOPICS=10
+python run.py train --data-root ./data/reuters/ --model lda --model-id lda_$NUM_TOPICS --num-topics $NUM_TOPICS
+```
 
-- [ ] Numbers etc. tagging or Named Entity Recognition to be fed as features
+### GloVe
 
-- [x] LDA Latent Dirichlet Allocation given as a feature to DL
+```
+chmod +x run_embedding_glove.sh
+./run_embedding_glove.sh
+```
 
-- [ ] Doc2Vec: https://radimrehurek.com/gensim/models/doc2vec.html
+###  NER
 
-- [ ] Concatenate word embeddings with pre-trained embeddings
+```
+TODO
+```
 
-# Preprocessing
+### Doc2Vec
 
-- [x] Checking frequencies of words and substituting them with UNK
+```
+python run.py train --data-root ./data/reuters/ --model doc2vec --model-id doc2vec
+```
 
-- [x] Stop words
+### LSTM
 
-- [ ] Words with spelling errors?
+```
+chmod +x run_simple_deep.sh
+./run_simple_deep.sh
+```
 
-- [ ] Numbers (1995, 15.3 etc)
+### HAN
 
-- [ ] Punctuation marks
+```
+TODO
+```
 
-# Evaluation - Visualization
-
-- [ ] Accuracy for single-label vs. multi-label instances
-
-- [ ] Visualization of confusion matrix
-
-# Implementation details
-
-- [x] Binary cross entropy for the loss
-
-- [ ] Batches pad packed sequence#s etc. to make training faster
 
 
