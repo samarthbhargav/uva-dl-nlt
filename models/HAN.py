@@ -121,15 +121,15 @@ class hanTrainer(object):
     def __init__(self, embeddings):
 
         self.embeddings = embeddings
-        self.batch_size = 128
+        self.batch_size = 64#128
         self.max_sent_len = 20  # Note: if you change it here you have to change it in vocabularyHAN.py as well
         self.max_num_sent = 10  # same for this... Should refactor this.
         self.embedding_size = 300
         self.learning_rate = 0.005#0.005
         self.learning_rate_type = "step" #"normal"
         # self.learning_rate_type = "normal"
-        self.weight_decay = 0.000001
-        self.cls_dropout = 0.1
+        self.weight_decay = 1e-05#0.000001
+        self.cls_dropout = 0#0.1
         self.exp_num = 16
         self.log_file_path = "D:\\courses\\dl4nlt\\results\\"
         self.neg_weight = 0.2
