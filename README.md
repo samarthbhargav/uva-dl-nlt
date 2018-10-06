@@ -60,7 +60,10 @@ chmod +x run_simple_deep.sh
 ### HAN
 
 ```
-TODO
+For changing the hyper params, experiment number and result path go to "models/HAN.py". Then edit them in "__init__" of "class hanTrainer"
+
+For run:
+python run_han.py train --data-root ./data/reuters --model han --epochs 200
 ```
 
 
