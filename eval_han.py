@@ -59,8 +59,8 @@ if __name__ == '__main__':
     log.info("Loading existing glove model")
     glove = file_utils.load_obj(glove_model_path)
 
-    sent_model_path = "D:\\courses\\dl4nlt\\14_best_model_sent.pt"
-    word_model_path = "D:\\courses\\dl4nlt\\14_best_model_word.pt"
+    sent_model_path = "./saved_models/14_best_model_sent.pt"
+    word_model_path = "./saved_models/14_best_model_word.pt"
     tester = hanTester(glove)
     tester.test(test_loader, word_model_path, sent_model_path)
 
