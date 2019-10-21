@@ -21,5 +21,5 @@ torchtext==0.2.3
 torchvision==0.2.1
 tqdm==4.25.0
 ujson==1.35
-urllib3==1.23
+urllib3==1.24.2
 wrapt==1.10.11
